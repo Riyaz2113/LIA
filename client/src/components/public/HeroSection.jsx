@@ -40,7 +40,7 @@ const HeroSection = () => {
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            objectPosition: '78% center',
+            objectPosition: 'right center',
             display: 'block',
           }}
           className="hero-bg-photo"
@@ -55,24 +55,10 @@ const HeroSection = () => {
             bottom: 0,
             right: 0,
             background:
-              'linear-gradient(90deg, #ffffff 0%, rgba(255, 255, 255, 0.98) 28%, rgba(255, 255, 255, 0.88) 42%, rgba(255, 255, 255, 0.4) 62%, rgba(255, 255, 255, 0.05) 78%, transparent 100%)',
+              'linear-gradient(90deg, #ffffff 0%, #ffffff 22%, rgba(255, 255, 255, 0.96) 30%, rgba(255, 255, 255, 0.75) 38%, rgba(255, 255, 255, 0.25) 46%, rgba(255, 255, 255, 0) 56%)',
             pointerEvents: 'none',
           }}
           className="hero-left-gradient"
-        />
-
-        {/* Soft Sky Top Gradient */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '120px',
-            background:
-              'linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 100%)',
-            pointerEvents: 'none',
-          }}
         />
       </div>
 
@@ -87,34 +73,58 @@ const HeroSection = () => {
           flexDirection: 'column',
           justifyContent: 'center',
           paddingTop: '2.5rem',
-          paddingBottom: '2.75rem',
+          paddingBottom: '2.5rem',
         }}
       >
         {/* Top Right Handwritten Cursive Slogan Floating in Sky */}
         <div
           style={{
             position: 'absolute',
-            top: '1.25rem',
-            right: '2.5rem',
+            top: '1.5rem',
+            right: '8%',
             zIndex: 12,
           }}
           className="hero-slogan-container"
         >
-          <span
-            className="cursive-slogan-hero"
-            style={{
-              fontFamily: "'Caveat', cursive, sans-serif",
-              fontSize: '1.95rem',
-              fontWeight: 700,
-              color: '#1e40af',
-              transform: 'rotate(-2.5deg)',
-              display: 'inline-block',
-              letterSpacing: '0.02em',
-              textShadow: '0 1px 4px rgba(255, 255, 255, 0.9)',
-            }}
-          >
-            People | Knowledge | A Smarter Campus
-          </span>
+          <div style={{ position: 'relative', display: 'inline-block' }}>
+            <span
+              className="cursive-slogan-hero"
+              style={{
+                fontFamily: "'Caveat', cursive, sans-serif",
+                fontSize: '2.1rem',
+                fontWeight: 700,
+                color: '#1d4ed8',
+                transform: 'rotate(-2.5deg)',
+                display: 'inline-block',
+                letterSpacing: '0.02em',
+                textShadow: '0 1px 3px rgba(255, 255, 255, 0.9)',
+                lineHeight: 1.1,
+              }}
+            >
+              People | Knowledge | A Smarter Campus
+            </span>
+            <svg
+              viewBox="0 0 200 12"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              style={{
+                position: 'absolute',
+                bottom: '-4px',
+                left: '20px',
+                width: '140px',
+                height: '8px',
+                transform: 'rotate(-2deg)',
+                opacity: 0.85,
+              }}
+            >
+              <path
+                d="M2 7C45 2 110 3 198 8"
+                stroke="#2563eb"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              />
+            </svg>
+          </div>
         </div>
 
         {/* Left Messaging Box */}
