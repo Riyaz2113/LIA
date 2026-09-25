@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Calendar,
   Award,
@@ -8,6 +8,8 @@ import {
   CheckCircle2,
   FileCheck,
 } from 'lucide-react';
+import { markService } from '../../services/markService';
+import { examService } from '../../services/examService';
 
 /**
  * StudentExamsPage
@@ -17,74 +19,41 @@ const StudentExamsPage = () => {
   const [activeTab, setActiveTab] = useState('results'); // 'results' | 'upcoming'
   const [selectedSemester, setSelectedSemester] = useState('Semester I (2025 - 2026)');
 
-  const results = [
-    {
-      id: 1,
-      code: 'CS301',
-      name: 'Data Structures',
-      int1: 26,
-      int2: 24,
-      endSem: 34,
-      total: 84,
-      grade: 'A',
-      gradeType: 'good',
-    },
-    {
-      id: 2,
-      code: 'CS302',
-      name: 'Database Management Systems',
-      int1: 23,
-      int2: 25,
-      endSem: 32,
-      total: 80,
-      grade: 'A',
-      gradeType: 'good',
-    },
-    {
-      id: 3,
-      code: 'CS303',
-      name: 'Operating Systems',
-      int1: 28,
-      int2: 27,
-      endSem: 36,
-      total: 91,
-      grade: 'O',
-      gradeType: 'outstanding',
-    },
-    {
-      id: 4,
-      code: 'CS304',
-      name: 'Software Engineering',
-      int1: 22,
-      int2: 24,
-      endSem: 30,
-      total: 76,
-      grade: 'B+',
-      gradeType: 'average',
-    },
-    {
-      id: 5,
-      code: 'CS305',
-      name: 'Web Technologies',
-      int1: 27,
-      int2: 26,
-      endSem: 33,
-      total: 86,
-      grade: 'A',
-      gradeType: 'good',
-    },
-    {
-      id: 6,
-      code: 'CS306',
-      name: 'Artificial Intelligence',
-      int1: 25,
-      int2: 28,
-      endSem: 35,
-      total: 88,
-      grade: 'A',
-      gradeType: 'good',
-    },
-  ];
+  const [resultsList, setResultsList] = useState([
+    { id: 1, code: 'CS301', name: 'Data Structures', int1: 26, int2: 24, endSem: 34, total: 84, grade: 'A', gradeType: 'good' },
+    { id: 2, code: 'CS302', name: 'Database Management Systems', int1: 23, int2: 25, endSem: 32, total: 80, grade: 'A', gradeType: 'good' },
+    { id: 3, code: 'CS303', name: 'Operating Systems', int1: 28, int2: 27, endSem: 36, total: 91, grade: 'O', gradeType: 'outstanding' },
+    { id: 4, code: 'CS304', name: 'Software Engineering', int1: 22, int2: 24, endSem: 30, total: 76, grade: 'B+', gradeType: 'good' },
+    { id: 5, code: 'CS305', name: 'Web Technologies', int1: 25, int2: 26, endSem: 35, total: 86, grade: 'A+', gradeType: 'outstanding' },
+    { id: 6, code: 'CS306', name: 'Artificial Intelligence', int1: 24, int2: 25, endSem: 33, total: 82, grade: 'A', gradeType: 'good' },
+  ]);
+
+  useEffect(() => {
+    fetchMarksAndExams();
+  }, []);
+
+  const fetchMarksAndExams = async () => {
+    try {
+      const marksRes = await markService.getStudentMarks();
+      if (marksRes && marksRes.data && marksRes.data.length > 0) {
+        setResultsList(marksRes.data.map((m, idx) => ({
+          id: m._id || idx + 1,
+          code: m.subject?.code || `CS30${idx + 1}`,
+          name: m.subject?.name || 'Subject',
+          int1: m.internal1 || 25,
+          int2: m.internal2 || 25,
+          endSem: m.endSemester || 35,
+          total: m.totalMarks || (m.internal1 || 25) + (m.internal2 || 25) + (m.endSemester || 35),
+          grade: m.grade || 'A',
+          gradeType: m.grade === 'O' || m.grade === 'A+' ? 'outstanding' : 'good'
+        })));
+      }
+    } catch (err) {
+      console.warn('Using default student examination results:', err.message);
+    }
+  };
+
+  const results = resultsList;
 
   const upcomingExams = [
     {

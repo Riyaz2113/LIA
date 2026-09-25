@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Briefcase,
   Search,
@@ -11,6 +11,7 @@ import {
   Bell,
   ArrowUpRight,
 } from 'lucide-react';
+import { placementService } from '../../services/placementService';
 
 /**
  * StudentPlacementsPage
@@ -20,58 +21,38 @@ const StudentPlacementsPage = () => {
   const [activeTab, setActiveTab] = useState('drives'); // 'drives' | 'placed' | 'resources'
   const [searchQuery, setSearchQuery] = useState('');
 
-  const drives = [
-    {
-      id: 1,
-      company: 'TCS',
-      role: 'Software Developer',
-      eligibility: 'B.Tech (All Branches)',
-      date: 'Oct 05, 2026',
-      location: 'On Campus',
-      status: 'Open',
-      applied: false,
-    },
-    {
-      id: 2,
-      company: 'Infosys',
-      role: 'Systems Engineer',
-      eligibility: 'B.Tech (CS/IT/ECE)',
-      date: 'Oct 12, 2026',
-      location: 'On Campus',
-      status: 'Open',
-      applied: false,
-    },
-    {
-      id: 3,
-      company: 'Accenture',
-      role: 'Application Developer',
-      eligibility: 'B.Tech (All Branches)',
-      date: 'Oct 20, 2026',
-      location: 'Off Campus',
-      status: 'Coming Soon',
-      applied: false,
-    },
-    {
-      id: 4,
-      company: 'Wipro',
-      role: 'Project Engineer',
-      eligibility: 'B.Tech (All Branches)',
-      date: 'Nov 01, 2026',
-      location: 'On Campus',
-      status: 'Open',
-      applied: false,
-    },
-    {
-      id: 5,
-      company: 'Cognizant',
-      role: 'Gen AI Engineer (Intern)',
-      eligibility: 'B.Tech (CS/AI/ML)',
-      date: 'Nov 10, 2026',
-      location: 'On Campus',
-      status: 'Open',
-      applied: false,
-    },
-  ];
+  const [drivesList, setDrivesList] = useState([
+    { id: 1, company: 'TCS', role: 'Software Developer', eligibility: 'B.Tech (All Branches)', date: 'Oct 05, 2026', location: 'On Campus', status: 'Open', applied: false },
+    { id: 2, company: 'Infosys', role: 'Systems Engineer', eligibility: 'B.Tech (CS/IT/ECE)', date: 'Oct 12, 2026', location: 'On Campus', status: 'Open', applied: false },
+    { id: 3, company: 'Accenture', role: 'Application Developer', eligibility: 'B.Tech (All Branches)', date: 'Oct 20, 2026', location: 'Off Campus', status: 'Coming Soon', applied: false },
+    { id: 4, company: 'Wipro', role: 'Project Engineer', eligibility: 'B.Tech (All Branches)', date: 'Nov 01, 2026', location: 'On Campus', status: 'Coming Soon', applied: false },
+  ]);
+
+  useEffect(() => {
+    fetchDrives();
+  }, []);
+
+  const fetchDrives = async () => {
+    try {
+      const res = await placementService.getAllDrives();
+      if (res && res.data && res.data.length > 0) {
+        setDrivesList(res.data.map(d => ({
+          id: d._id || d.id,
+          company: d.company?.name || d.companyName || d.company || 'Company',
+          role: d.title || d.role || 'Software Engineer',
+          eligibility: d.eligibilityCriteria?.departments?.join(', ') || d.eligibility || 'B.Tech (All Branches)',
+          date: d.driveDate ? new Date(d.driveDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : 'TBD',
+          location: 'On Campus',
+          status: d.status === 'COMPLETED' ? 'Closed' : 'Open',
+          applied: false
+        })));
+      }
+    } catch (err) {
+      console.warn('Using default placement drives:', err.message);
+    }
+  };
+
+  const drives = drivesList;
 
   const filteredDrives = drives.filter(
     (d) =>

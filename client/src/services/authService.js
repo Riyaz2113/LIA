@@ -1,73 +1,46 @@
 import apiClient from './apiClient';
 
-// Mock student profile matching the approved reference design
-const MOCK_STUDENT_USER = {
-  id: 'mock-student-001',
-  name: 'Rahul Kumar',
-  email: 'rahulkumar21bcs101@vignan.ac.in',
-  role: 'STUDENT',
-  phone: '+91 98765 43210',
-  isActive: true,
-  profile: {
-    rollNumber: '21BCS101',
-    department: 'Computer Science and Engineering',
-    year: 'III Year',
-    section: 'Section A',
-  },
-};
-
 /**
  * authService
- * Handles real backend API calls with seamless mock fallback for frontend testing.
+ * Handles authenticated API calls using secure HTTP-only cookies (lia_token).
+ * Never stores JWT in localStorage or sessionStorage.
  */
 export const authService = {
+  /**
+   * Authenticate user against backend POST /api/auth/login
+   * @param {{ identifier: string, password: string, role?: string }} credentials
+   * @returns {Promise<{ success: boolean, message: string, user: Object }>}
+   */
   login: async (credentials) => {
-    try {
-      const response = await apiClient.post('/auth/login', credentials);
-      return response.data;
-    } catch (err) {
-      // If backend is offline or student demo credentials entered, allow mock student access
-      const id = credentials.identifier?.toLowerCase() || '';
-      if (
-        id.includes('21bcs101') ||
-        id.includes('student') ||
-        id.includes('rahul') ||
-        !err.response // Network error / backend offline
-      ) {
-        sessionStorage.setItem('lia_mock_user', JSON.stringify(MOCK_STUDENT_USER));
-        return {
-          success: true,
-          message: 'Login successful (Demo Mode)',
-          user: MOCK_STUDENT_USER,
-        };
-      }
-      throw err;
-    }
+    const response = await apiClient.post('/auth/login', {
+      identifier: credentials.identifier,
+      password: credentials.password,
+    });
+    return response.data;
   },
 
+  /**
+   * Terminate session via backend POST /api/auth/logout
+   * Clears HTTP-only cookie
+   */
   logout: async () => {
     try {
-      await apiClient.post('/auth/logout');
+      const response = await apiClient.post('/auth/logout');
+      return response.data;
     } catch {
-      // ignore network errors
-    } finally {
-      sessionStorage.removeItem('lia_mock_user');
+      return { success: true, message: 'Logged out' };
     }
-    return { success: true, message: 'Logged out' };
   },
 
+  /**
+   * Get currently authenticated user and profile via GET /api/auth/me
+   * @returns {Promise<{ success: boolean, user: Object, profile?: Object }>}
+   */
   me: async () => {
-    try {
-      const response = await apiClient.get('/auth/me');
-      return response.data;
-    } catch (err) {
-      const stored = sessionStorage.getItem('lia_mock_user');
-      if (stored) {
-        const user = JSON.parse(stored);
-        return { success: true, user, profile: user.profile };
-      }
-      throw err;
-    }
+    const response = await apiClient.get('/auth/me');
+    return response.data;
   },
 };
+
+export default authService;
 

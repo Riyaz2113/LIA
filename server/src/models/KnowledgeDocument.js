@@ -33,17 +33,35 @@ const knowledgeDocumentSchema = new Schema(
     },
     fileUrl: {
       type: String,
-      required: [true, 'File URL is required'],
       trim: true,
-      // Cloudinary or other storage URL — never store binary in DB
+      default: '',
+    },
+    source: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    hash: {
+      type: String,
+      trim: true,
+      default: null,
+      index: true,
     },
     fileType: {
       type: String,
       trim: true,
       uppercase: true,
       maxlength: [20, 'File type cannot exceed 20 characters'],
-      // e.g. "PDF", "DOCX", "TXT"
       default: null,
+    },
+    extractionMethod: {
+      type: String,
+      trim: true,
+      default: 'native',
+    },
+    isScanned: {
+      type: Boolean,
+      default: false,
     },
     category: {
       type: String,
@@ -51,36 +69,43 @@ const knowledgeDocumentSchema = new Schema(
         values: ['ACADEMIC', 'EXAM', 'PLACEMENT', 'HOSTEL', 'REGULATIONS', 'CAMPUS', 'GENERAL'],
         message: 'Category must be ACADEMIC, EXAM, PLACEMENT, HOSTEL, REGULATIONS, CAMPUS, or GENERAL',
       },
-      required: [true, 'Category is required'],
+      default: 'GENERAL',
     },
     uploadedBy: {
       type: Schema.Types.ObjectId,
       ref: 'User',
-      required: [true, 'Uploader is required'],
+      default: null,
     },
     processingStatus: {
       type: String,
       enum: {
-        values: ['UPLOADED', 'PROCESSING', 'PROCESSED', 'FAILED'],
-        message: 'Processing status must be UPLOADED, PROCESSING, PROCESSED, or FAILED',
+        values: ['UPLOADED', 'PENDING', 'PROCESSING', 'PROCESSED', 'COMPLETED', 'FAILED', 'SKIPPED'],
+        message: 'Invalid processing status',
       },
-      default: 'UPLOADED',
+      default: 'PENDING',
     },
     chunkCount: {
       type: Number,
-      // Number of text chunks created during RAG processing — set in future phase
       min: [0, 'Chunk count cannot be negative'],
-      default: null,
+      default: 0,
+    },
+    embeddingModel: {
+      type: String,
+      trim: true,
+      default: 'BAAI/bge-m3',
+    },
+    collectionName: {
+      type: String,
+      trim: true,
+      default: 'lia_knowledge',
     },
     vectorIndex: {
       type: String,
       trim: true,
-      // Reference to the external vector store index ID — set in future phase
       default: null,
     },
     version: {
       type: Number,
-      // Incremented when document is re-uploaded/re-processed
       default: 1,
       min: [1, 'Version must be at least 1'],
     },
@@ -90,13 +115,11 @@ const knowledgeDocumentSchema = new Schema(
     },
     processedAt: {
       type: Date,
-      // Timestamp when RAG processing completed — set in future phase
       default: null,
     },
     errorMessage: {
       type: String,
       trim: true,
-      // Stores RAG pipeline error details when processingStatus is FAILED
       default: null,
     },
   },
@@ -106,6 +129,5 @@ const knowledgeDocumentSchema = new Schema(
 // ─── Indexes ──────────────────────────────────────────────────────────────────
 knowledgeDocumentSchema.index({ category: 1 });
 knowledgeDocumentSchema.index({ processingStatus: 1 });
-knowledgeDocumentSchema.index({ uploadedBy: 1 });
 
 module.exports = mongoose.model('KnowledgeDocument', knowledgeDocumentSchema);

@@ -48,6 +48,5 @@ const courseSchema = new Schema(
 
 // ─── Indexes ──────────────────────────────────────────────────────────────────
 courseSchema.index({ department: 1 });
-courseSchema.index({ code: 1 });   // Unique — explicit
 
 module.exports = mongoose.model('Course', courseSchema);

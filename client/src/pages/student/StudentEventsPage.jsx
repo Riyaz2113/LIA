@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Calendar,
   Clock,
   MapPin,
   Sparkles,
 } from 'lucide-react';
+import { eventService } from '../../services/eventService';
 
 /**
  * StudentEventsPage
@@ -13,7 +14,7 @@ import {
 const StudentEventsPage = () => {
   const [activeTab, setActiveTab] = useState('upcoming'); // 'upcoming' | 'past'
 
-  const events = [
+  const [eventsList, setEventsList] = useState([
     {
       id: 1,
       title: 'Technical Talk on Cloud Computing',
@@ -24,8 +25,7 @@ const StudentEventsPage = () => {
       category: 'Technical',
       categoryBg: '#eff6ff',
       categoryColor: '#2563eb',
-      image:
-        'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=600&q=80',
+      image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=600&q=80',
     },
     {
       id: 2,
@@ -37,8 +37,7 @@ const StudentEventsPage = () => {
       category: 'Placement',
       categoryBg: '#fff7ed',
       categoryColor: '#ea580c',
-      image:
-        'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=600&q=80',
+      image: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=600&q=80',
     },
     {
       id: 3,
@@ -50,23 +49,42 @@ const StudentEventsPage = () => {
       category: 'Cultural',
       categoryBg: '#fdf2f8',
       categoryColor: '#db2777',
-      image:
-        'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80',
+      image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80',
     },
-    {
-      id: 4,
-      title: 'Alumni Interaction',
-      month: 'OCT',
-      day: '05',
-      time: '11:00 AM - 01:00 PM',
-      location: 'Seminar Hall',
-      category: 'Alumni',
-      categoryBg: '#eff6ff',
-      categoryColor: '#2563eb',
-      image:
-        'https://images.unsplash.com/photo-1529070538774-1843cb3265df?auto=format&fit=crop&w=600&q=80',
-    },
-  ];
+  ]);
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const fetchEvents = async () => {
+    try {
+      const res = await eventService.getAll();
+      if (res && res.data && res.data.length > 0) {
+        setEventsList(res.data.map(e => {
+          const dt = e.startDate ? new Date(e.startDate) : new Date();
+          const monthStr = dt.toLocaleString('en-US', { month: 'short' }).toUpperCase();
+          const dayStr = String(dt.getDate()).padStart(2, '0');
+          return {
+            id: e._id || e.id,
+            title: e.title,
+            month: monthStr,
+            day: dayStr,
+            time: e.startDate ? `${new Date(e.startDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : '10:00 AM',
+            location: e.venue || 'Campus Auditorium',
+            category: e.category ? (e.category.charAt(0).toUpperCase() + e.category.slice(1).toLowerCase()) : 'Campus Event',
+            categoryBg: '#eff6ff',
+            categoryColor: '#2563eb',
+            image: e.posterUrl || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=600&q=80'
+          };
+        }));
+      }
+    } catch (err) {
+      console.warn('Using default events list:', err.message);
+    }
+  };
+
+  const events = eventsList;
 
   const pastEvents = [
     {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   BookOpen,
   Calendar,
@@ -7,6 +7,8 @@ import {
   ChevronDown,
   FileText,
 } from 'lucide-react';
+import { subjectService } from '../../services/subjectService';
+import { timetableService } from '../../services/timetableService';
 
 /**
  * StudentSubjectsPage
@@ -17,56 +19,38 @@ const StudentSubjectsPage = () => {
   const [selectedSemester, setSelectedSemester] = useState('Semester I (2025 - 2026)');
   const [timetableMode, setTimetableMode] = useState('week'); // 'week' | 'day'
 
-  const subjects = [
-    {
-      id: 1,
-      code: 'CS301',
-      name: 'Data Structures',
-      type: 'Theory',
-      credits: 4,
-      faculty: 'Dr. R. Mehta',
-    },
-    {
-      id: 2,
-      code: 'CS302',
-      name: 'Database Management Systems',
-      type: 'Theory',
-      credits: 4,
-      faculty: 'Dr. S. Rao',
-    },
-    {
-      id: 3,
-      code: 'CS303',
-      name: 'Operating Systems',
-      type: 'Theory',
-      credits: 4,
-      faculty: 'Dr. P. Kumar',
-    },
-    {
-      id: 4,
-      code: 'CS304',
-      name: 'Software Engineering',
-      type: 'Theory',
-      credits: 3,
-      faculty: 'Dr. K. Sharma',
-    },
-    {
-      id: 5,
-      code: 'CS305',
-      name: 'Web Technologies',
-      type: 'Lab',
-      credits: 2,
-      faculty: 'Ms. A. Reddy',
-    },
-    {
-      id: 6,
-      code: 'CS306',
-      name: 'Artificial Intelligence',
-      type: 'Theory',
-      credits: 4,
-      faculty: 'Dr. M. Iqbal',
-    },
-  ];
+  const [subjectList, setSubjectList] = useState([
+    { id: 1, code: 'CS301', name: 'Data Structures', type: 'Theory', credits: 4, faculty: 'Dr. R. Mehta' },
+    { id: 2, code: 'CS302', name: 'Database Management Systems', type: 'Theory', credits: 4, faculty: 'Dr. S. Rao' },
+    { id: 3, code: 'CS303', name: 'Operating Systems', type: 'Theory', credits: 4, faculty: 'Dr. P. Kumar' },
+    { id: 4, code: 'CS304', name: 'Software Engineering', type: 'Theory', credits: 3, faculty: 'Dr. K. Sharma' },
+    { id: 5, code: 'CS305', name: 'Web Technologies', type: 'Lab', credits: 2, faculty: 'Ms. A. Reddy' },
+    { id: 6, code: 'CS306', name: 'Artificial Intelligence', type: 'Theory', credits: 3, faculty: 'Dr. V. Prasad' },
+  ]);
+
+  useEffect(() => {
+    fetchSubjectsAndTimetable();
+  }, []);
+
+  const fetchSubjectsAndTimetable = async () => {
+    try {
+      const subRes = await subjectService.getAll();
+      if (subRes && subRes.data && subRes.data.length > 0) {
+        setSubjectList(subRes.data.map((s, idx) => ({
+          id: s._id || idx + 1,
+          code: s.code || `CS30${idx + 1}`,
+          name: s.name,
+          type: s.type ? (s.type.charAt(0).toUpperCase() + s.type.slice(1).toLowerCase()) : 'Theory',
+          credits: s.credits || 4,
+          faculty: s.faculty?.profile?.firstName ? `Dr. ${s.faculty.profile.lastName || s.faculty.profile.firstName}` : 'Dr. R. Mehta'
+        })));
+      }
+    } catch (err) {
+      console.warn('Using default subject curriculum:', err.message);
+    }
+  };
+
+  const subjects = subjectList;
 
   const timeSlots = [
     '09:00 - 10:00',

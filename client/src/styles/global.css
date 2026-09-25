@@ -189,3 +189,27 @@ button {
   background-color: #162a56;
   transform: translateY(-1px);
 }
+
+/* ── LIA Chat Markdown Typography ─────────────────────────── */
+.lia-markdown-content > *:first-child {
+  margin-top: 0 !important;
+}
+
+.lia-markdown-content > *:last-child {
+  margin-bottom: 0 !important;
+}
+
+.lia-markdown-content ul,
+.lia-markdown-content ol {
+  padding-left: 1.25rem;
+}
+
+.lia-markdown-content strong {
+  color: inherit;
+  font-weight: 700;
+}
+
+.lia-markdown-content code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+

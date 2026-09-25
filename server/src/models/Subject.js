@@ -68,6 +68,5 @@ const subjectSchema = new Schema(
 
 // ─── Indexes ──────────────────────────────────────────────────────────────────
 subjectSchema.index({ department: 1, semester: 1 }); // Frequent query: "subjects for dept+sem"
-subjectSchema.index({ code: 1 });                    // Unique — explicit
 
 module.exports = mongoose.model('Subject', subjectSchema);

@@ -64,7 +64,6 @@ const facultySchema = new Schema(
 
 // ─── Indexes ──────────────────────────────────────────────────────────────────
 facultySchema.index({ department: 1 });
-facultySchema.index({ employeeId: 1 }); // Unique — explicit
 facultySchema.index({ isActive: 1 });
 
 module.exports = mongoose.model('Faculty', facultySchema);

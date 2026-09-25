@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Bell,
   Download,
   FileText,
   Megaphone,
 } from 'lucide-react';
+import { noticeService } from '../../services/noticeService';
 
 /**
  * StudentNoticesPage
@@ -15,43 +16,36 @@ const StudentNoticesPage = () => {
 
   const categories = ['All', 'Academic', 'Examination', 'Placements', 'General'];
 
-  const notices = [
-    {
-      id: 1,
-      title: 'Internal Assessment Schedule Released',
-      category: 'Academic',
-      date: 'Sep 14, 2026',
-      description: 'Internal exam schedule for all B.Tech branches released. Verify time slots.',
-    },
-    {
-      id: 2,
-      title: 'Fee Payment Reminder',
-      category: 'General',
-      date: 'Sep 10, 2026',
-      description: 'Last date for semester fee payment without late fine is Sep 25, 2026.',
-    },
-    {
-      id: 3,
-      title: 'Placement Training Program',
-      category: 'Placements',
-      date: 'Sep 08, 2026',
-      description: 'Special technical and soft skills training sessions start next Monday.',
-    },
-    {
-      id: 4,
-      title: 'Hostel Re-allotment Notice',
-      category: 'General',
-      date: 'Sep 05, 2026',
-      description: 'Room re-allotment and maintenance schedule for all blocks posted.',
-    },
-    {
-      id: 5,
-      title: 'Alumni Interaction Session',
-      category: 'Events',
-      date: 'Sep 01, 2026',
-      description: 'Session with alumni working at Google, Microsoft, and Amazon on career paths.',
-    },
-  ];
+  const [noticesList, setNoticesList] = useState([
+    { id: 1, title: 'Internal Assessment Schedule Released', category: 'Academic', date: 'Sep 14, 2026', description: 'Internal exam schedule for all B.Tech branches released. Verify time slots.' },
+    { id: 2, title: 'Fee Payment Reminder', category: 'General', date: 'Sep 10, 2026', description: 'Last date for semester fee payment without late fine is Sep 25, 2026.' },
+    { id: 3, title: 'Placement Training Program', category: 'Placements', date: 'Sep 08, 2026', description: 'Special technical and soft skills training sessions start next Monday.' },
+    { id: 4, title: 'Hostel Re-allotment Notice', category: 'General', date: 'Sep 05, 2026', description: 'Room re-allotment and maintenance schedule for all blocks posted.' },
+    { id: 5, title: 'Alumni Interaction Session', category: 'Events', date: 'Sep 01, 2026', description: 'Session with alumni working at Google, Microsoft, and Amazon on career paths.' },
+  ]);
+
+  useEffect(() => {
+    fetchNotices();
+  }, []);
+
+  const fetchNotices = async () => {
+    try {
+      const res = await noticeService.getAll();
+      if (res && res.data && res.data.length > 0) {
+        setNoticesList(res.data.map(n => ({
+          id: n._id || n.id,
+          title: n.title,
+          category: n.category ? (n.category.charAt(0).toUpperCase() + n.category.slice(1).toLowerCase()) : 'General',
+          date: n.createdAt ? new Date(n.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : 'Recent',
+          description: n.content || n.description || 'Notice details available in the document.'
+        })));
+      }
+    } catch (err) {
+      console.warn('Using default notices list:', err.message);
+    }
+  };
+
+  const notices = noticesList;
 
   const filteredNotices =
     selectedCategory === 'All'

@@ -422,10 +422,16 @@ const ChatPage = () => {
             <div
               style={{
                 width: '100%',
-                maxWidth: '440px',
+                maxWidth: activeTab === 'chat' ? '880px' : '440px',
+                height: 'calc(100vh - 4rem)',
+                minHeight: '620px',
                 borderRadius: '24px',
                 boxShadow: '0 25px 60px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.15)',
+                display: 'flex',
+                flexDirection: 'column',
+                transition: 'max-width 200ms ease',
               }}
+              className="chat-workspace-card"
             >
               {activeTab === 'home' ? (
                 <ChatHome
@@ -550,8 +556,8 @@ const ChatPage = () => {
       <style>{`
         @media (min-width: 1080px) {
           .chat-desktop-layout-grid {
-            grid-template-columns: 1fr auto !important;
-            gap: 3.5rem !important;
+            grid-template-columns: minmax(280px, 340px) 1fr !important;
+            gap: 2.5rem !important;
           }
           .chat-side-panel-left {
             display: flex !important;
@@ -559,8 +565,8 @@ const ChatPage = () => {
         }
         @media (min-width: 1320px) {
           .chat-desktop-layout-grid {
-            grid-template-columns: 1fr auto 1fr !important;
-            gap: 3.5rem !important;
+            grid-template-columns: minmax(280px, 340px) 1fr minmax(280px, 340px) !important;
+            gap: 2.5rem !important;
           }
           .chat-side-panel-right {
             display: flex !important;

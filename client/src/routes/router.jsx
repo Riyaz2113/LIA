@@ -25,6 +25,41 @@ import StudentNoticesPage from '../pages/student/StudentNoticesPage';
 import StudentEventsPage from '../pages/student/StudentEventsPage';
 import StudentLibraryPage from '../pages/student/StudentLibraryPage';
 
+// Faculty pages (Phase 8)
+import FacultyDashboardPage from '../pages/faculty/FacultyDashboardPage';
+import FacultyProfilePage from '../pages/faculty/FacultyProfilePage';
+import FacultyClassesPage from '../pages/faculty/FacultyClassesPage';
+import FacultyAttendancePage from '../pages/faculty/FacultyAttendancePage';
+import FacultySubmissionsPage from '../pages/faculty/FacultySubmissionsPage';
+import FacultyMarksPage from '../pages/faculty/FacultyMarksPage';
+import FacultyMaterialsPage from '../pages/faculty/FacultyMaterialsPage';
+import FacultyTimetablePage from '../pages/faculty/FacultyTimetablePage';
+import FacultyAnnouncementsPage from '../pages/faculty/FacultyAnnouncementsPage';
+import FacultyNotificationsPage from '../pages/faculty/FacultyNotificationsPage';
+import FacultySettingsPage from '../pages/faculty/FacultySettingsPage';
+
+// Admin pages (Phase 9)
+import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
+import AdminUsersPage from '../pages/admin/AdminUsersPage';
+import AdminStudentsPage from '../pages/admin/AdminStudentsPage';
+import AdminFacultyPage from '../pages/admin/AdminFacultyPage';
+import AdminDepartmentsPage from '../pages/admin/AdminDepartmentsPage';
+import AdminAcademicsPage from '../pages/admin/AdminAcademicsPage';
+import AdminSubjectsPage from '../pages/admin/AdminSubjectsPage';
+import AdminTimetablePage from '../pages/admin/AdminTimetablePage';
+import AdminAttendancePage from '../pages/admin/AdminAttendancePage';
+import AdminExamsPage from '../pages/admin/AdminExamsPage';
+import AdminNoticesPage from '../pages/admin/AdminNoticesPage';
+import AdminEventsPage from '../pages/admin/AdminEventsPage';
+import AdminPlacementsPage from '../pages/admin/AdminPlacementsPage';
+import AdminLibraryPage from '../pages/admin/AdminLibraryPage';
+import AdminMaterialsPage from '../pages/admin/AdminMaterialsPage';
+import AdminGalleryPage from '../pages/admin/AdminGalleryPage';
+import AdminChatbotPage from '../pages/admin/AdminChatbotPage';
+import AdminNotificationsPage from '../pages/admin/AdminNotificationsPage';
+import AdminSettingsPage from '../pages/admin/AdminSettingsPage';
+import AdminAuditLogsPage from '../pages/admin/AdminAuditLogsPage';
+
 // Utility pages
 import NotFoundPage from '../pages/NotFoundPage';
 
@@ -37,10 +72,6 @@ import NotFoundPage from '../pages/NotFoundPage';
  *   /faculty/*       → FacultyLayout — requires auth + FACULTY role
  *   /admin/*         → AdminLayout   — requires auth + ADMIN role
  *   *                → 404 Not Found
- *
- * Login page and dashboard pages are added in future phases.
- * ProtectedRoute and RoleRoute provide the authentication/authorization
- * layer without requiring any UI pages yet.
  */
 const router = createBrowserRouter([
   {
@@ -106,7 +137,17 @@ const router = createBrowserRouter([
             path: '/faculty',
             element: <FacultyLayout />,
             children: [
-              // Faculty dashboard pages added in the Faculty Portal phase
+              { index: true, element: <FacultyDashboardPage /> },
+              { path: 'profile', element: <FacultyProfilePage /> },
+              { path: 'classes', element: <FacultyClassesPage /> },
+              { path: 'attendance', element: <FacultyAttendancePage /> },
+              { path: 'submissions', element: <FacultySubmissionsPage /> },
+              { path: 'marks', element: <FacultyMarksPage /> },
+              { path: 'materials', element: <FacultyMaterialsPage /> },
+              { path: 'timetable', element: <FacultyTimetablePage /> },
+              { path: 'announcements', element: <FacultyAnnouncementsPage /> },
+              { path: 'notifications', element: <FacultyNotificationsPage /> },
+              { path: 'settings', element: <FacultySettingsPage /> },
             ],
           },
         ],
@@ -125,7 +166,26 @@ const router = createBrowserRouter([
             path: '/admin',
             element: <AdminLayout />,
             children: [
-              // Admin dashboard pages added in the Admin Portal phase
+              { index: true, element: <AdminDashboardPage /> },
+              { path: 'users', element: <AdminUsersPage /> },
+              { path: 'students', element: <AdminStudentsPage /> },
+              { path: 'faculty', element: <AdminFacultyPage /> },
+              { path: 'departments', element: <AdminDepartmentsPage /> },
+              { path: 'academics', element: <AdminAcademicsPage /> },
+              { path: 'subjects', element: <AdminSubjectsPage /> },
+              { path: 'timetable', element: <AdminTimetablePage /> },
+              { path: 'attendance', element: <AdminAttendancePage /> },
+              { path: 'exams', element: <AdminExamsPage /> },
+              { path: 'notices', element: <AdminNoticesPage /> },
+              { path: 'events', element: <AdminEventsPage /> },
+              { path: 'placements', element: <AdminPlacementsPage /> },
+              { path: 'library', element: <AdminLibraryPage /> },
+              { path: 'materials', element: <AdminMaterialsPage /> },
+              { path: 'gallery', element: <AdminGalleryPage /> },
+              { path: 'chatbot', element: <AdminChatbotPage /> },
+              { path: 'notifications', element: <AdminNotificationsPage /> },
+              { path: 'settings', element: <AdminSettingsPage /> },
+              { path: 'audit-logs', element: <AdminAuditLogsPage /> },
             ],
           },
         ],

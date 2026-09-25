@@ -14,23 +14,14 @@ const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
   withCredentials: true, // Send HTTP-only cookie on every request
-  timeout: 10000,
+  timeout: 60000, // 60s timeout for RAG + Cross-Encoder + Gemini generation
 });
 
 // ─── Response Interceptor ─────────────────────────────────────────────────────
 // Centralised error handling.
-// 401 will trigger AuthContext to clear user state (wired in a future phase).
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    const status = error.response?.status;
-
-    if (status === 401) {
-      // Session expired or invalid — AuthContext handles state cleanup
-      // The HTTP-only cookie will be cleared by the backend /logout endpoint
-      // Do NOT call window.location.href here — let AuthContext/router handle it
-    }
-
     return Promise.reject(error);
   }
 );

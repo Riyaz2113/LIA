@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   BookOpen,
   Search,
@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   Lock,
 } from 'lucide-react';
+import { libraryService } from '../../services/libraryService';
 
 /**
  * StudentLibraryPage
@@ -21,48 +22,37 @@ const StudentLibraryPage = () => {
   const [selectedSubject, setSelectedSubject] = useState('All Subjects');
   const [selectedType, setSelectedType] = useState('All Types');
 
-  const resources = [
-    {
-      id: 1,
-      title: 'Data Structures and Algorithms in Java',
-      author: 'Robert Lafore',
-      subject: 'Computer Science',
-      type: 'Book',
-      availability: 'Available',
-    },
-    {
-      id: 2,
-      title: 'Database System Concepts',
-      author: 'Silberschatz, Korth, Sudarshan',
-      subject: 'Database',
-      type: 'Book',
-      availability: 'Available',
-    },
-    {
-      id: 3,
-      title: 'Operating System Concepts',
-      author: 'Abraham Silberschatz',
-      subject: 'Operating Systems',
-      type: 'Book',
-      availability: 'Issued',
-    },
-    {
-      id: 4,
-      title: 'Software Engineering',
-      author: 'Ian Sommerville',
-      subject: 'Software Engineering',
-      type: 'Book',
-      availability: 'Available',
-    },
-    {
-      id: 5,
-      title: 'Introduction to Machine Learning',
-      author: 'Ethem Alpaydin',
-      subject: 'Artificial Intelligence',
-      type: 'e-Book',
-      availability: 'Available',
-    },
-  ];
+  const [resourceList, setResourceList] = useState([
+    { id: 1, title: 'Data Structures and Algorithms in Java', author: 'Robert Lafore', subject: 'Computer Science', type: 'Book', availability: 'Available' },
+    { id: 2, title: 'Database System Concepts', author: 'Silberschatz, Korth, Sudarshan', subject: 'Database', type: 'Book', availability: 'Available' },
+    { id: 3, title: 'Operating System Concepts', author: 'Abraham Silberschatz', subject: 'Operating Systems', type: 'Book', availability: 'Issued' },
+    { id: 4, title: 'Software Engineering', author: 'Ian Sommerville', subject: 'Software Engineering', type: 'Book', availability: 'Available' },
+    { id: 5, title: 'Introduction to Machine Learning', author: 'Ethem Alpaydin', subject: 'AI & ML', type: 'Book', availability: 'Available' },
+  ]);
+
+  useEffect(() => {
+    fetchLibrary();
+  }, []);
+
+  const fetchLibrary = async () => {
+    try {
+      const res = await libraryService.getAll();
+      if (res && res.data && res.data.length > 0) {
+        setResourceList(res.data.map(b => ({
+          id: b._id || b.id,
+          title: b.title,
+          author: b.author || b.authors?.join(', ') || 'Faculty Author',
+          subject: b.category || b.department || 'Computer Science',
+          type: 'Book',
+          availability: (b.availableCopies > 0 || b.available > 0) ? 'Available' : 'Issued'
+        })));
+      }
+    } catch (err) {
+      console.warn('Using default library catalog:', err.message);
+    }
+  };
+
+  const resources = resourceList;
 
   const filteredResources = resources.filter((item) => {
     const matchesSearch =

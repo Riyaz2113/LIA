@@ -53,7 +53,6 @@ const departmentSchema = new Schema(
 );
 
 // ─── Indexes ──────────────────────────────────────────────────────────────────
-departmentSchema.index({ code: 1 });   // Unique — explicit
 departmentSchema.index({ isActive: 1 });
 
 module.exports = mongoose.model('Department', departmentSchema);

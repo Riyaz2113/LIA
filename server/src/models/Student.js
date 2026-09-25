@@ -26,11 +26,10 @@ const studentSchema = new Schema(
     registrationNumber: {
       type: String,
       unique: true,
-      sparse: true, // Allow null until assigned
+      sparse: true,
       trim: true,
       uppercase: true,
       maxlength: [30, 'Registration number cannot exceed 30 characters'],
-      default: null,
     },
     department: {
       type: Schema.Types.ObjectId,
@@ -108,7 +107,6 @@ const studentSchema = new Schema(
 );
 
 // ─── Indexes ──────────────────────────────────────────────────────────────────
-studentSchema.index({ rollNumber: 1 });         // Unique — explicit
 studentSchema.index({ department: 1 });
 studentSchema.index({ department: 1, year: 1, semester: 1, section: 1 });
 studentSchema.index({ admissionYear: 1 });

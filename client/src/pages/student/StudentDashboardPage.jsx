@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   CheckSquare,
@@ -12,6 +13,9 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { dashboardService } from '../../services/dashboardService';
+import { timetableService } from '../../services/timetableService';
+import { noticeService } from '../../services/noticeService';
 
 /**
  * StudentDashboardPage
@@ -20,27 +24,76 @@ import { useAuth } from '../../context/AuthContext';
  */
 const StudentDashboardPage = () => {
   const { user } = useAuth();
-  const studentName = user?.name || 'Rahul Kumar';
+  const studentName = user?.name || (user?.profile?.firstName ? `${user.profile.firstName} ${user.profile.lastName}` : 'Rahul Kumar');
   const rollNumber = user?.profile?.rollNumber || '21BCS101';
 
-  const stats = [
-    { label: 'Overall Attendance', value: '85%', sub: '236 / 278 Classes', color: '#16a34a', bg: '#f0fdf4', icon: CheckSquare },
-    { label: 'Current CGPA', value: '8.32', sub: 'Semester V Completed', color: '#2563eb', bg: '#eff6ff', icon: Award },
-    { label: 'Current Subjects', value: '6', sub: 'Semester VI (2025-26)', color: '#9333ea', bg: '#faf5ff', icon: BookOpen },
-    { label: 'Upcoming Exams', value: '2', sub: 'Starts Oct 05, 2026', color: '#ea580c', bg: '#fff7ed', icon: Calendar },
-  ];
+  const [statsData, setStatsData] = useState({
+    attendancePercentage: '85%',
+    cgpa: '8.32',
+    subjectsCount: '6',
+    upcomingExamsCount: '2'
+  });
 
-  const todayClasses = [
+  const [todayClasses, setTodayClasses] = useState([
     { time: '09:00 - 10:00 AM', code: 'CS301', subject: 'Data Structures', room: 'Room 302', faculty: 'Dr. R. Mehta', status: 'Completed' },
     { time: '10:00 - 11:00 AM', code: 'CS302', subject: 'Database Management Systems', room: 'Room 304', faculty: 'Dr. S. Rao', status: 'Ongoing' },
     { time: '11:15 - 12:15 PM', code: 'CS303', subject: 'Operating Systems', room: 'Room 302', faculty: 'Dr. P. Kumar', status: 'Upcoming' },
     { time: '01:30 - 03:30 PM', code: 'CS305', subject: 'Web Technologies Lab', room: 'Lab 4', faculty: 'Ms. A. Reddy', status: 'Upcoming' },
-  ];
+  ]);
 
-  const recentNotices = [
+  const [recentNotices, setRecentNotices] = useState([
     { id: 1, title: 'Internal Assessment Schedule Released', category: 'Academic', date: 'Sep 14, 2026' },
     { id: 2, title: 'Fee Payment Reminder for Final Semester', category: 'General', date: 'Sep 10, 2026' },
     { id: 3, title: 'TCS Placement Training Program', category: 'Placements', date: 'Sep 08, 2026' },
+  ]);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      const statsRes = await dashboardService.getStudentStats();
+      if (statsRes && statsRes.data) {
+        setStatsData({
+          attendancePercentage: `${statsRes.data.attendancePercentage || 85}%`,
+          cgpa: `${statsRes.data.cgpa || 8.32}`,
+          subjectsCount: `${statsRes.data.subjectsCount || 6}`,
+          upcomingExamsCount: `${statsRes.data.upcomingExamsCount || 2}`
+        });
+      }
+
+      const scheduleRes = await timetableService.getStudentSchedule();
+      if (scheduleRes && scheduleRes.data && scheduleRes.data.length > 0) {
+        setTodayClasses(scheduleRes.data.map(slot => ({
+          time: `${slot.startTime || '09:00 AM'} - ${slot.endTime || '10:00 AM'}`,
+          code: slot.subject?.code || slot.subjectCode || 'CS301',
+          subject: slot.subject?.name || slot.subjectName || 'Course',
+          room: slot.room || 'Room 302',
+          faculty: slot.faculty?.profile?.firstName ? `Dr. ${slot.faculty.profile.lastName || slot.faculty.profile.firstName}` : 'Faculty',
+          status: 'Upcoming'
+        })));
+      }
+
+      const noticesRes = await noticeService.getAll();
+      if (noticesRes && noticesRes.data && noticesRes.data.length > 0) {
+        setRecentNotices(noticesRes.data.slice(0, 3).map(n => ({
+          id: n._id || n.id,
+          title: n.title,
+          category: n.category ? `${n.category.charAt(0).toUpperCase() + n.category.slice(1).toLowerCase()}` : 'Academic',
+          date: n.createdAt ? new Date(n.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Sep 14, 2026'
+        })));
+      }
+    } catch (err) {
+      console.warn('Using default student dashboard metrics:', err.message);
+    }
+  };
+
+  const stats = [
+    { label: 'Overall Attendance', value: statsData.attendancePercentage, sub: '236 / 278 Classes', color: '#16a34a', bg: '#f0fdf4', icon: CheckSquare },
+    { label: 'Current CGPA', value: statsData.cgpa, sub: 'Semester VI Completed', color: '#2563eb', bg: '#eff6ff', icon: Award },
+    { label: 'Current Subjects', value: statsData.subjectsCount, sub: 'Semester VI (2025-26)', color: '#9333ea', bg: '#faf5ff', icon: BookOpen },
+    { label: 'Upcoming Exams', value: statsData.upcomingExamsCount, sub: 'Mid-Term Examinations', color: '#ea580c', bg: '#fff7ed', icon: Calendar },
   ];
 
   return (

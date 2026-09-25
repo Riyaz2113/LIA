@@ -7,8 +7,18 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "seed:admin": "node scripts/seedAdmin.js",
-    "test:phase3": "node scripts/test.phase3.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "ingest:knowledge": "node scripts/ingestKnowledge.js",
+    "rebuild:bm25": "node scripts/rebuildBm25.js",
+    "test:phase10": "node scripts/test.phase10.js",
+    "test:phase11": "node scripts/test.phase11.js",
+    "test:phase12": "node scripts/test.phase12.js",
+    "test:phase13": "node scripts/test.phase13.js",
+    "test:phase13.5": "node scripts/test.phase13.5.js",
+    "test:phase14": "node scripts/test.phase14.js",
+    "test:phase15": "node scripts/test.phase15.js",
+    "test:phase16": "node scripts/test.phase16.js",
+    "test:phase17": "node scripts/test.phase17.js",
+    "test": "node scripts/test.phase17.js"
   },
   "keywords": [],
   "author": "",
@@ -16,13 +26,17 @@
   "type": "commonjs",
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "chromadb": "^3.5.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^18.0.1",
     "express": "^5.2.1",
     "express-validator": "^7.3.2",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^9.10.1"
+    "mammoth": "^1.12.3",
+    "mongoose": "^9.10.1",
+    "pdf-parse": "^2.4.5",
+    "tesseract.js": "^7.0.0"
   },
   "devDependencies": {
     "mongodb-memory-server": "^11.2.0",

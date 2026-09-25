@@ -70,7 +70,6 @@ const userSchema = new Schema(
 );
 
 // ─── Indexes ──────────────────────────────────────────────────────────────────
-userSchema.index({ email: 1 });      // Already unique, but explicit for clarity
 userSchema.index({ role: 1 });
 userSchema.index({ isActive: 1 });
 
