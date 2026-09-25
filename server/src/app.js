@@ -32,20 +32,33 @@ const app = express();
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
 // credentials: true is required for HTTP-only cookie authentication to work
-// across the frontend (http://localhost:5173 / http://127.0.0.1:5173) and backend
+// across the frontend and backend
+const clientUrls = (process.env.CLIENT_URL || '')
+  .split(',')
+  .map((u) => u.trim())
+  .filter(Boolean);
+
 const allowedOrigins = [
-  process.env.CLIENT_URL,
+  ...clientUrls,
+  'https://lia-cyan.vercel.app',
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:5174',
   'http://127.0.0.1:5174',
+  'http://localhost:3000',
+  'https://lia-719n.onrender.com',
 ].filter(Boolean);
 
 app.use(
   cors({
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps, curl, or server-to-server)
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        /\.vercel\.app$/.test(origin) ||
+        /\.onrender\.com$/.test(origin)
+      ) {
         callback(null, true);
       } else {
         callback(null, origin); // Reflect origin if valid

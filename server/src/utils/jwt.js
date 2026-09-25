@@ -51,7 +51,7 @@ const getCookieOptions = () => {
   return {
     httpOnly: true,           // Not accessible via document.cookie
     secure: isProduction,     // HTTPS only in production
-    sameSite: isProduction ? 'strict' : 'lax',
+    sameSite: isProduction ? 'none' : 'lax', // 'none' required for cross-domain HTTPS in production
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
     path: '/',
   };
