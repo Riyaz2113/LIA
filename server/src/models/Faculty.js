@@ -50,6 +50,21 @@ const facultySchema = new Schema(
       type: Date,
       default: null,
     },
+    officeLocation: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    officeHours: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    personalEmail: {
+      type: String,
+      trim: true,
+      default: '',
+    },
     profileImage: {
       type: String,   // Cloudinary URL — stored later
       default: null,

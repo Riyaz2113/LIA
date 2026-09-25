@@ -13,6 +13,10 @@ export const studentService = {
     const res = await apiClient.get('/students/me');
     return res.data;
   },
+  updateMe: async (data) => {
+    const res = await apiClient.put('/students/me', data);
+    return res.data;
+  },
   create: async (data) => {
     const res = await apiClient.post('/students', data);
     return res.data;

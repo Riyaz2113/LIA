@@ -1,13 +1,37 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Play } from 'lucide-react';
+import { ArrowRight, Play, X } from 'lucide-react';
 
 /**
  * HeroSection
- * Full-width panoramic background hero section matching the exact approved TOP reference.
- * Real campus photograph (ChatGPT Image Sep 19, 2026, 08_57_26 PM.png) extends full-width across the background
- * with a smooth left-side light gradient overlay for maximum text readability and clarity.
+ * Full-width panoramic background hero section matching the approved reference design.
+ * Real campus photograph extends full-width across the background with smooth gradient overlay.
+ * Includes interactive "Watch Video" modal playing the official Google Drive campus video.
  */
 const HeroSection = () => {
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+
+  // Close modal on Escape key press and manage body scroll
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setIsVideoModalOpen(false);
+      }
+    };
+
+    if (isVideoModalOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = '';
+    };
+  }, [isVideoModalOpen]);
+
   return (
     <section
       id="home"
@@ -62,88 +86,68 @@ const HeroSection = () => {
         />
       </div>
 
-      {/* 2. Hero Content Container (aligned with header/page grid) */}
+      {/* 2. Content Overlay Container */}
       <div
-        className="container"
         style={{
           position: 'relative',
-          zIndex: 10,
+          zIndex: 2,
+          maxWidth: '1280px',
+          margin: '0 auto',
+          padding: '4rem 2rem 4.5rem 2rem',
           minHeight: '480px',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
-          paddingTop: '2.5rem',
-          paddingBottom: '2.5rem',
         }}
+        className="hero-content-wrapper"
       >
-        {/* Top Right Handwritten Cursive Slogan Floating in Sky */}
+        {/* Slogan Banner Pill */}
         <div
           style={{
             position: 'absolute',
-            top: '1.5rem',
-            right: '8%',
-            zIndex: 12,
+            top: '1.75rem',
+            right: '2rem',
+            zIndex: 10,
           }}
           className="hero-slogan-container"
         >
-          <div style={{ position: 'relative', display: 'inline-block' }}>
-            <span
-              className="cursive-slogan-hero"
-              style={{
-                fontFamily: "'Caveat', cursive, sans-serif",
-                fontSize: '2.1rem',
-                fontWeight: 700,
-                color: '#1d4ed8',
-                transform: 'rotate(-2.5deg)',
-                display: 'inline-block',
-                letterSpacing: '0.02em',
-                textShadow: '0 1px 3px rgba(255, 255, 255, 0.9)',
-                lineHeight: 1.1,
-              }}
-            >
-              People | Knowledge | A Smarter Campus
-            </span>
-            <svg
-              viewBox="0 0 200 12"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              style={{
-                position: 'absolute',
-                bottom: '-4px',
-                left: '20px',
-                width: '140px',
-                height: '8px',
-                transform: 'rotate(-2deg)',
-                opacity: 0.85,
-              }}
-            >
-              <path
-                d="M2 7C45 2 110 3 198 8"
-                stroke="#2563eb"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              />
-            </svg>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              backgroundColor: '#0f172a',
+              color: '#ffffff',
+              padding: '0.45rem 1.125rem',
+              borderRadius: '9999px',
+              fontSize: '0.75rem',
+              fontWeight: 800,
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+              boxShadow: '0 4px 14px rgba(15, 23, 42, 0.25)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+            }}
+          >
+            A UNIT OF VIGNAN GROUP
           </div>
         </div>
 
-        {/* Left Messaging Box */}
+        {/* Left-Aligned Main Hero Typography & Call-to-Action */}
         <div
           style={{
-            maxWidth: '600px',
+            maxWidth: '620px',
             position: 'relative',
-            zIndex: 15,
+            zIndex: 3,
           }}
-          className="hero-text-content"
         >
-          {/* Welcome Badge */}
+          {/* Welcome Badge Tag */}
           <div
             style={{
+              display: 'inline-block',
               fontSize: '0.8125rem',
-              fontWeight: 700,
-              letterSpacing: '0.18em',
-              textTransform: 'uppercase',
+              fontWeight: 800,
               color: '#2563eb',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
               marginBottom: '0.75rem',
             }}
           >
@@ -244,10 +248,7 @@ const HeroSection = () => {
             {/* Watch Video Secondary Button */}
             <button
               type="button"
-              onClick={() => {
-                const aboutElem = document.getElementById('about');
-                if (aboutElem) aboutElem.scrollIntoView({ behavior: 'smooth' });
-              }}
+              onClick={() => setIsVideoModalOpen(true)}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -259,6 +260,7 @@ const HeroSection = () => {
                 color: '#2563eb',
                 border: '1.5px solid #2563eb',
                 borderRadius: '9999px',
+                cursor: 'pointer',
                 transition: 'all 160ms ease',
                 boxShadow: '0 2px 6px rgba(37, 99, 235, 0.08)',
               }}
@@ -284,7 +286,161 @@ const HeroSection = () => {
         </div>
       </div>
 
+      {/* 3. Professional Google Drive Campus Video Modal Overlay */}
+      {isVideoModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Campus Video Player"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 99999,
+            backgroundColor: 'rgba(15, 23, 42, 0.82)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.25rem',
+            animation: 'liaFadeIn 200ms ease-out',
+          }}
+          onClick={() => setIsVideoModalOpen(false)}
+        >
+          <div
+            style={{
+              position: 'relative',
+              width: '100%',
+              maxWidth: '960px',
+              backgroundColor: '#0f172a',
+              borderRadius: '20px',
+              overflow: 'hidden',
+              boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+              display: 'flex',
+              flexDirection: 'column',
+              animation: 'liaScaleUp 200ms ease-out',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Top Bar */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0.875rem 1.5rem',
+                backgroundColor: '#1e293b',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                <div
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '50%',
+                    backgroundColor: '#2563eb',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Play size={12} fill="#ffffff" color="#ffffff" style={{ marginLeft: '1px' }} />
+                </div>
+                <div>
+                  <h3
+                    style={{
+                      fontSize: '0.9375rem',
+                      fontWeight: 700,
+                      color: '#ffffff',
+                      margin: 0,
+                    }}
+                  >
+                    Vignan&apos;s Lara Campus Video Tour
+                  </h3>
+                  <p
+                    style={{
+                      fontSize: '0.75rem',
+                      color: '#94a3b8',
+                      margin: 0,
+                    }}
+                  >
+                    Official Campus Overview &bull; Vignan&apos;s Lara Institute of Technology &amp; Science
+                  </p>
+                </div>
+              </div>
+
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={() => setIsVideoModalOpen(false)}
+                aria-label="Close Video"
+                title="Close Video (Esc)"
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 150ms ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)';
+                  e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.5)';
+                  e.currentTarget.style.color = '#ef4444';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                  e.currentTarget.style.color = '#ffffff';
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* 16:9 Responsive Video Player Container */}
+            <div
+              style={{
+                position: 'relative',
+                width: '100%',
+                paddingTop: '56.25%', // 16:9 Aspect Ratio
+                backgroundColor: '#000000',
+              }}
+            >
+              <iframe
+                src="https://drive.google.com/file/d/1hKivKzSwuLdLjVqdX6Xr8tyO_PFNH21e/preview"
+                title="Vignan's Lara Campus Video"
+                allow="autoplay; encrypted-media; picture-in-picture"
+                allowFullScreen
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  border: 'none',
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`
+        @keyframes liaFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes liaScaleUp {
+          from { transform: scale(0.95); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
         @media (min-width: 1200px) {
           .lia-fullwidth-hero {
             min-height: 500px !important;

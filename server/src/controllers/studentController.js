@@ -279,9 +279,70 @@ const deleteStudent = async (req, res, next) => {
   }
 };
 
+// PUT /api/students/me - Student updates their own permitted profile fields
+const updateMe = async (req, res, next) => {
+  try {
+    const student = await Student.findOne({ user: req.user._id });
+    if (!student) {
+      return next(new AppError('Student profile not found.', 404));
+    }
+
+    const {
+      name,
+      phone,
+      dateOfBirth,
+      gender,
+      address,
+      personalEmail,
+      alternatePhone,
+      bloodGroup,
+      guardianName,
+      guardianPhone,
+      achievements,
+      interests,
+    } = req.body;
+
+    if (dateOfBirth !== undefined) student.dateOfBirth = dateOfBirth;
+    if (gender !== undefined) student.gender = gender;
+    if (address !== undefined) {
+      student.address = {
+        street: address.street ?? student.address?.street ?? '',
+        city: address.city ?? student.address?.city ?? '',
+        state: address.state ?? student.address?.state ?? '',
+        pincode: address.pincode ?? student.address?.pincode ?? '',
+      };
+    }
+    if (personalEmail !== undefined) student.personalEmail = personalEmail;
+    if (alternatePhone !== undefined) student.alternatePhone = alternatePhone;
+    if (bloodGroup !== undefined) student.bloodGroup = bloodGroup;
+    if (guardianName !== undefined) student.guardianName = guardianName;
+    if (guardianPhone !== undefined) student.guardianPhone = guardianPhone;
+    if (achievements !== undefined && Array.isArray(achievements)) student.achievements = achievements;
+    if (interests !== undefined && Array.isArray(interests)) student.interests = interests;
+
+    await student.save();
+
+    if (name || phone !== undefined) {
+      await User.findByIdAndUpdate(req.user._id, {
+        ...(name && { name }),
+        ...(phone !== undefined && { phone }),
+      });
+    }
+
+    const updated = await Student.findOne({ user: req.user._id })
+      .populate('user', 'name email phone profileImage role')
+      .populate('department', 'name code');
+
+    return sendSuccess(res, updated);
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getAllStudents,
   getMe,
+  updateMe,
   getStudentById,
   createStudent,
   updateStudent,

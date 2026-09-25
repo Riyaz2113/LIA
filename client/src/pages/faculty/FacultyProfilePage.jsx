@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Mail,
   Phone,
@@ -12,20 +12,105 @@ import {
   Building,
   Clock,
   ExternalLink,
+  CheckCircle2,
+  X,
+  AlertCircle,
+  Loader2,
+  ShieldAlert,
 } from 'lucide-react';
 import FacultyPageHeader from '../../components/faculty/FacultyPageHeader';
 import FacultyTabs from '../../components/faculty/FacultyTabs';
 import FacultyTable from '../../components/faculty/FacultyTable';
+import facultyService from '../../services/facultyService';
+import { useAuth } from '../../context/AuthContext';
 
 /**
  * FacultyProfilePage
- * Complete faculty profile view matching the exact reference design.
- * Features profile summary card with ID badge, 2-column contact & academic specs,
- * and 4 sub-tabs (Subjects Handling, Research & Publications, Achievements, Professional Development).
+ * Complete faculty profile view matching the exact reference design with MongoDB Atlas persistence.
  */
 const FacultyProfilePage = () => {
+  const { user } = useAuth();
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('Subjects Handling');
-  const [isEditing, setIsEditing] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  // Form state for faculty-editable fields
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    personalEmail: '',
+    qualification: '',
+    specialization: '',
+    officeLocation: '',
+    officeHours: '',
+  });
+
+  const loadProfile = async () => {
+    try {
+      setLoading(true);
+      const res = await facultyService.getMe();
+      if (res && res.data) {
+        setProfile(res.data);
+      }
+    } catch (err) {
+      console.warn('Could not fetch faculty profile from /api/faculty/me:', err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const openEditModal = () => {
+    setFormData({
+      name: profile?.user?.name || user?.name || 'Dr. R. Mehta',
+      phone: profile?.user?.phone || user?.phone || '+91 98765 43210',
+      personalEmail: profile?.personalEmail || 'rmehta@vignanlara.ac.in',
+      qualification: profile?.qualification || 'Ph.D. in Computer Science & Engineering',
+      specialization: profile?.specialization || 'Artificial Intelligence & Deep Learning',
+      officeLocation: profile?.officeLocation || 'Cabin #304, Admin & Academic Block, 3rd Floor',
+      officeHours: profile?.officeHours || 'Mon - Fri: 2:00 PM - 4:30 PM',
+    });
+    setErrorMessage('');
+    setIsModalOpen(true);
+  };
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setErrorMessage('');
+
+    const payload = {
+      name: formData.name.trim(),
+      phone: formData.phone.trim(),
+      personalEmail: formData.personalEmail.trim(),
+      qualification: formData.qualification.trim(),
+      specialization: formData.specialization.trim(),
+      officeLocation: formData.officeLocation.trim(),
+      officeHours: formData.officeHours.trim(),
+    };
+
+    try {
+      const res = await facultyService.updateMe(payload);
+      if (res && res.data) {
+        setProfile(res.data);
+      }
+      setIsModalOpen(false);
+      setToastMessage('✅ Faculty profile updated successfully in MongoDB Atlas.');
+      setTimeout(() => setToastMessage(''), 4000);
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message || 'Unable to save profile changes.';
+      setErrorMessage(msg);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const tabs = [
     { id: 'Subjects Handling', name: 'Subjects Handling' },
@@ -77,8 +162,51 @@ const FacultyProfilePage = () => {
     { title: 'Professional Member, Association for Computing Machinery (ACM)', date: 'Since 2021', mode: 'Active' },
   ];
 
+  // Resolved faculty data
+  const facultyData = {
+    name: profile?.user?.name || user?.name || 'Dr. R. Mehta',
+    designation: profile?.designation || 'Assistant Professor',
+    department: profile?.department?.name || 'Department of Computer Science & Engineering',
+    employeeId: profile?.employeeId || user?.profile?.employeeId || 'VLIT/CSE/1046',
+    email: profile?.user?.email || user?.email || 'rmehta@vignanlara.ac.in',
+    personalEmail: profile?.personalEmail || profile?.user?.email || 'rmehta@vignanlara.ac.in',
+    phone: profile?.user?.phone || user?.phone || '+91 98765 43210',
+    joiningDate: profile?.joiningDate
+      ? new Date(profile.joiningDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+      : '12 Aug 2022',
+    qualification: profile?.qualification || 'Ph.D. in Computer Science & Engineering',
+    specialization: profile?.specialization || 'Artificial Intelligence & Deep Learning',
+    officeLocation: profile?.officeLocation || 'Cabin #304, Admin & Academic Block, 3rd Floor',
+    officeHours: profile?.officeHours || 'Mon - Fri: 2:00 PM - 4:30 PM',
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      {/* Toast */}
+      {toastMessage && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '20px',
+            right: '24px',
+            zIndex: 9999,
+            backgroundColor: '#10b981',
+            color: '#ffffff',
+            padding: '12px 20px',
+            borderRadius: '10px',
+            boxShadow: '0 8px 24px rgba(16, 185, 129, 0.3)',
+            fontSize: '14px',
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+        >
+          <CheckCircle2 size={18} />
+          {toastMessage}
+        </div>
+      )}
+
       {/* 1. Header */}
       <FacultyPageHeader
         title="My Profile"
@@ -108,7 +236,7 @@ const FacultyProfilePage = () => {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
-            {/* Faculty Large Photo/Avatar */}
+            {/* Faculty Avatar */}
             <div
               style={{
                 width: '88px',
@@ -147,13 +275,13 @@ const FacultyProfilePage = () => {
                   margin: '0 0 0.25rem 0',
                 }}
               >
-                Dr. R. Mehta
+                {facultyData.name}
               </h2>
               <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: '#2563eb', marginBottom: '0.2rem' }}>
-                Assistant Professor
+                {facultyData.designation}
               </div>
               <div style={{ fontSize: '0.8125rem', color: '#475569', marginBottom: '0.5rem' }}>
-                Department of Computer Science &amp; Engineering &bull; Vignan&apos;s Lara Institute of Technology &amp; Science
+                {facultyData.department} &bull; Vignan&apos;s Lara Institute of Technology &amp; Science
               </div>
 
               {/* Faculty ID Badge */}
@@ -169,7 +297,7 @@ const FacultyProfilePage = () => {
                   borderRadius: '6px',
                 }}
               >
-                Faculty ID: VLIT/CSE/1046
+                Faculty ID: {facultyData.employeeId}
               </span>
             </div>
           </div>
@@ -177,7 +305,7 @@ const FacultyProfilePage = () => {
           {/* Edit Profile Button */}
           <button
             type="button"
-            onClick={() => setIsEditing(!isEditing)}
+            onClick={openEditModal}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -194,7 +322,7 @@ const FacultyProfilePage = () => {
             }}
           >
             <Edit3 size={16} />
-            <span>{isEditing ? 'Close Editing' : 'Edit Profile'}</span>
+            <span>Edit Profile</span>
           </button>
         </div>
 
@@ -215,7 +343,7 @@ const FacultyProfilePage = () => {
               </div>
               <div>
                 <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase' }}>Email</div>
-                <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#0f172a' }}>rmehta@vignanlara.ac.in</div>
+                <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#0f172a' }}>{facultyData.personalEmail || facultyData.email}</div>
               </div>
             </div>
 
@@ -225,7 +353,7 @@ const FacultyProfilePage = () => {
               </div>
               <div>
                 <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase' }}>Phone</div>
-                <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#0f172a' }}>+91 98765 43210</div>
+                <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#0f172a' }}>{facultyData.phone}</div>
               </div>
             </div>
 
@@ -245,7 +373,7 @@ const FacultyProfilePage = () => {
               </div>
               <div>
                 <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase' }}>Date of Joining</div>
-                <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#0f172a' }}>12 Aug 2022</div>
+                <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#0f172a' }}>{facultyData.joiningDate}</div>
               </div>
             </div>
           </div>
@@ -253,91 +381,73 @@ const FacultyProfilePage = () => {
           {/* Right Column */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#f0fdfa', color: '#0d9488', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <GraduationCap size={16} />
               </div>
               <div>
-                <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase' }}>Qualification</div>
-                <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#0f172a' }}>Ph.D. (CSE)</div>
+                <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase' }}>Highest Qualification</div>
+                <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#0f172a' }}>{facultyData.qualification}</div>
               </div>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#f0fdf4', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#fdf2f8', color: '#db2777', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Sparkles size={16} />
               </div>
               <div>
                 <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase' }}>Specialization</div>
-                <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#0f172a' }}>Machine Learning, Data Science</div>
+                <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#0f172a' }}>{facultyData.specialization}</div>
               </div>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#faf5ff', color: '#9333ea', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <BookOpen size={16} />
-              </div>
-              <div>
-                <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase' }}>Research Interests</div>
-                <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#0f172a' }}>AI, NLP, Computer Vision</div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#fff7ed', color: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#eef2ff', color: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Building size={16} />
               </div>
               <div>
-                <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase' }}>Office Room &amp; Hours</div>
-                <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#0f172a' }}>
-                  301, CSE Block &bull; Mon - Fri, 10:00 AM - 4:00 PM
-                </div>
+                <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase' }}>Cabin / Office Location</div>
+                <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#0f172a' }}>{facultyData.officeLocation}</div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#f5f3ff', color: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Clock size={16} />
+              </div>
+              <div>
+                <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase' }}>Consultation / Office Hours</div>
+                <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#0f172a' }}>{facultyData.officeHours}</div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 3. Sub-Tabs */}
-      <FacultyTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+      {/* 3. Sub Tabs & Content */}
+      <FacultyTabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
-      {/* 4. Tab Content */}
+      {/* Tab: Subjects Handling */}
       {activeTab === 'Subjects Handling' && (
         <FacultyTable
           columns={[
-            { header: '#', width: '60px' },
-            { header: 'Subject Code', width: '160px' },
-            { header: 'Subject Name' },
-            { header: 'Semester', width: '140px' },
-            { header: 'Section', width: '120px' },
+            { key: 'code', label: 'Subject Code', width: '130px' },
+            { key: 'name', label: 'Subject Name' },
+            { key: 'semester', label: 'Year / Semester', width: '150px' },
+            { key: 'section', label: 'Sections Handled', width: '150px' },
           ]}
         >
           {subjectsHandling.map((sub) => (
-            <tr
-              key={sub.id}
-              style={{
-                borderBottom: '1px solid #f1f5f9',
-                transition: 'background-color 150ms ease',
-              }}
-              className="faculty-table-row"
-            >
-              <td style={{ padding: '1rem', fontSize: '0.875rem', color: '#64748b' }}>{sub.id}</td>
-              <td style={{ padding: '1rem', fontSize: '0.875rem', fontWeight: 700, color: '#2563eb' }}>
-                {sub.code}
+            <tr key={sub.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+              <td style={{ padding: '1rem', fontWeight: 700, color: '#2563eb', fontSize: '0.8125rem' }}>{sub.code}</td>
+              <td style={{ padding: '1rem', fontWeight: 600, color: '#0f172a', fontSize: '0.8125rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <BookOpen size={15} color="#64748b" />
+                  <span>{sub.name}</span>
+                </div>
               </td>
-              <td style={{ padding: '1rem', fontSize: '0.875rem', fontWeight: 600, color: '#0f172a' }}>
-                {sub.name}
-              </td>
-              <td style={{ padding: '1rem', fontSize: '0.875rem', color: '#475569' }}>{sub.semester}</td>
-              <td style={{ padding: '1rem', fontSize: '0.875rem', color: '#475569' }}>
-                <span
-                  style={{
-                    backgroundColor: '#f8fafc',
-                    border: '1px solid #e2e8f0',
-                    padding: '0.2rem 0.5rem',
-                    borderRadius: '6px',
-                    fontWeight: 600,
-                  }}
-                >
+              <td style={{ padding: '1rem', fontSize: '0.8125rem', color: '#475569' }}>{sub.semester}</td>
+              <td style={{ padding: '1rem', fontSize: '0.8125rem', color: '#475569' }}>
+                <span style={{ backgroundColor: '#f1f5f9', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 600 }}>
                   {sub.section}
                 </span>
               </td>
@@ -346,61 +456,39 @@ const FacultyProfilePage = () => {
         </FacultyTable>
       )}
 
+      {/* Tab: Research & Publications */}
       {activeTab === 'Research & Publications' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {publications.map((p, idx) => (
+          {publications.map((pub, idx) => (
             <div
               key={idx}
               style={{
                 backgroundColor: '#ffffff',
-                borderRadius: '14px',
-                border: '1.5px solid #e2e8f0',
+                borderRadius: '12px',
+                border: '1px solid #e2e8f0',
                 padding: '1.25rem 1.5rem',
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '1rem',
+                gap: '1.5rem',
               }}
             >
-              <div style={{ flex: 1, minWidth: '280px' }}>
-                <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: '#0f172a', marginBottom: '0.35rem' }}>
-                  {p.title}
-                </div>
-                <div style={{ fontSize: '0.8125rem', color: '#2563eb', fontWeight: 600 }}>
-                  {p.journal} ({p.year})
-                </div>
-                <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.2rem' }}>
-                  DOI: {p.doi} &bull; Citations: {p.citations}
-                </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: '#0f172a' }}>{pub.title}</div>
+                <div style={{ fontSize: '0.8125rem', color: '#2563eb', fontWeight: 600 }}>{pub.journal} &bull; {pub.year}</div>
+                <div style={{ fontSize: '0.75rem', color: '#64748b' }}>DOI: {pub.doi}</div>
               </div>
-
-              <a
-                href={`https://doi.org/${p.doi}`}
-                target="_blank"
-                rel="noreferrer"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  padding: '0.45rem 0.85rem',
-                  borderRadius: '8px',
-                  backgroundColor: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  color: '#2563eb',
-                  fontSize: '0.8125rem',
-                  fontWeight: 600,
-                  textDecoration: 'none',
-                }}
-              >
-                <span>View Paper</span>
-                <ExternalLink size={14} />
-              </a>
+              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                <span style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', fontSize: '0.75rem', fontWeight: 700, padding: '0.25rem 0.65rem', borderRadius: '6px' }}>
+                  {pub.citations} Citations
+                </span>
+              </div>
             </div>
           ))}
         </div>
       )}
 
+      {/* Tab: Achievements */}
       {activeTab === 'Achievements' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {achievements.map((ach, idx) => (
@@ -408,78 +496,375 @@ const FacultyProfilePage = () => {
               key={idx}
               style={{
                 backgroundColor: '#ffffff',
-                borderRadius: '14px',
-                border: '1.5px solid #e2e8f0',
+                borderRadius: '12px',
+                border: '1px solid #e2e8f0',
                 padding: '1.25rem 1.5rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '1.25rem',
+                justifyContent: 'space-between',
+                gap: '1rem',
               }}
             >
-              <div
-                style={{
-                  width: '42px',
-                  height: '42px',
-                  borderRadius: '12px',
-                  backgroundColor: '#faf5ff',
-                  color: '#9333ea',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <Award size={22} />
-              </div>
-              <div>
-                <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: '#0f172a' }}>
-                  {ach.title}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#fef3c7', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Award size={20} />
                 </div>
-                <div style={{ fontSize: '0.8125rem', color: '#64748b', marginTop: '0.15rem' }}>
-                  {ach.org} &bull; {ach.year}
+                <div>
+                  <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: '#0f172a' }}>{ach.title}</div>
+                  <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>{ach.org}</div>
                 </div>
               </div>
+              <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#2563eb' }}>{ach.year}</span>
             </div>
           ))}
         </div>
       )}
 
+      {/* Tab: Professional Development */}
       {activeTab === 'Professional Development' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {professionalDev.map((dev, idx) => (
+          {professionalDev.map((item, idx) => (
             <div
               key={idx}
               style={{
                 backgroundColor: '#ffffff',
-                borderRadius: '14px',
-                border: '1.5px solid #e2e8f0',
+                borderRadius: '12px',
+                border: '1px solid #e2e8f0',
                 padding: '1.25rem 1.5rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
+                gap: '1rem',
               }}
             >
               <div>
-                <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: '#0f172a' }}>
-                  {dev.title}
-                </div>
-                <div style={{ fontSize: '0.8125rem', color: '#2563eb', fontWeight: 600, marginTop: '0.2rem' }}>
-                  {dev.mode}
-                </div>
+                <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: '#0f172a' }}>{item.title}</div>
+                <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>Organized / Validated by: {item.mode}</div>
               </div>
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>
-                {dev.date}
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, backgroundColor: '#f1f5f9', color: '#334155', padding: '0.25rem 0.65rem', borderRadius: '6px' }}>
+                {item.date}
               </span>
             </div>
           ))}
         </div>
       )}
 
-      <style>{`
-        .faculty-table-row:hover {
-          background-color: #f8fafc;
-        }
-      `}</style>
+      {/* Edit Profile Modal */}
+      {isModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.5)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '1.5rem',
+          }}
+          onClick={() => !saving && setIsModalOpen(false)}
+        >
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '18px',
+              maxWidth: '640px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              boxShadow: '0 20px 40px rgba(15, 23, 42, 0.2)',
+              border: '1.5px solid #e2e8f0',
+              padding: '2rem',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingBottom: '1rem',
+                borderBottom: '1px solid #f1f5f9',
+                marginBottom: '1.5rem',
+              }}
+            >
+              <div>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: '0 0 0.25rem 0' }}>
+                  Edit Faculty Profile
+                </h2>
+                <p style={{ fontSize: '0.8125rem', color: '#64748b', margin: 0 }}>
+                  Update your contact details, qualification, specialization, and office hours.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => !saving && setIsModalOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#94a3b8',
+                  padding: '0.25rem',
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Error Message */}
+            {errorMessage && (
+              <div
+                style={{
+                  backgroundColor: '#fef2f2',
+                  border: '1px solid #fecaca',
+                  color: '#b91c1c',
+                  padding: '0.75rem 1rem',
+                  borderRadius: '8px',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  marginBottom: '1.25rem',
+                }}
+              >
+                <AlertCircle size={16} />
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
+            {/* Institutional Security Notice */}
+            <div
+              style={{
+                backgroundColor: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                padding: '0.75rem 1rem',
+                fontSize: '0.75rem',
+                color: '#64748b',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                marginBottom: '1.5rem',
+              }}
+            >
+              <ShieldAlert size={16} color="#64748b" />
+              <span>
+                <strong>Institutional Notice:</strong> Employee ID ({facultyData.employeeId}), Department ({facultyData.department}), and official designation are protected institutional records managed by Administration.
+              </span>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.6rem 0.75rem',
+                      fontSize: '0.875rem',
+                      borderRadius: '8px',
+                      border: '1.5px solid #cbd5e1',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
+                    Contact Phone
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="+91 98765 43210"
+                    style={{
+                      width: '100%',
+                      padding: '0.6rem 0.75rem',
+                      fontSize: '0.875rem',
+                      borderRadius: '8px',
+                      border: '1.5px solid #cbd5e1',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
+                  Personal / Professional Email
+                </label>
+                <input
+                  type="email"
+                  value={formData.personalEmail}
+                  onChange={(e) => setFormData({ ...formData, personalEmail: e.target.value })}
+                  placeholder="e.g. rmehta@vignanlara.ac.in"
+                  style={{
+                    width: '100%',
+                    padding: '0.6rem 0.75rem',
+                    fontSize: '0.875rem',
+                    borderRadius: '8px',
+                    border: '1.5px solid #cbd5e1',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
+                    Highest Qualification
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.qualification}
+                    onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
+                    placeholder="Ph.D. in Computer Science"
+                    style={{
+                      width: '100%',
+                      padding: '0.6rem 0.75rem',
+                      fontSize: '0.875rem',
+                      borderRadius: '8px',
+                      border: '1.5px solid #cbd5e1',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
+                    Specialization / Area of Research
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.specialization}
+                    onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
+                    placeholder="AI, Machine Learning, NLP"
+                    style={{
+                      width: '100%',
+                      padding: '0.6rem 0.75rem',
+                      fontSize: '0.875rem',
+                      borderRadius: '8px',
+                      border: '1.5px solid #cbd5e1',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
+                    Cabin / Office Location
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.officeLocation}
+                    onChange={(e) => setFormData({ ...formData, officeLocation: e.target.value })}
+                    placeholder="Cabin #304, Academic Block"
+                    style={{
+                      width: '100%',
+                      padding: '0.6rem 0.75rem',
+                      fontSize: '0.875rem',
+                      borderRadius: '8px',
+                      border: '1.5px solid #cbd5e1',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
+                    Consultation Hours
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.officeHours}
+                    onChange={(e) => setFormData({ ...formData, officeHours: e.target.value })}
+                    placeholder="Mon - Fri: 2:00 PM - 4:30 PM"
+                    style={{
+                      width: '100%',
+                      padding: '0.6rem 0.75rem',
+                      fontSize: '0.875rem',
+                      borderRadius: '8px',
+                      border: '1.5px solid #cbd5e1',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Modal Actions */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
+                  gap: '0.75rem',
+                  paddingTop: '1rem',
+                  borderTop: '1px solid #f1f5f9',
+                  marginTop: '0.5rem',
+                }}
+              >
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => setIsModalOpen(false)}
+                  style={{
+                    padding: '0.625rem 1.25rem',
+                    borderRadius: '8px',
+                    border: '1.5px solid #e2e8f0',
+                    backgroundColor: '#ffffff',
+                    color: '#475569',
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    cursor: saving ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.625rem 1.5rem',
+                    borderRadius: '8px',
+                    border: 'none',
+                    backgroundColor: '#2563eb',
+                    color: '#ffffff',
+                    fontSize: '0.875rem',
+                    fontWeight: 700,
+                    cursor: saving ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)',
+                  }}
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>Saving changes...</span>
+                    </>
+                  ) : (
+                    <span>Save Changes</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

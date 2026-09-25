@@ -261,9 +261,53 @@ const deleteFaculty = async (req, res, next) => {
   }
 };
 
+// PUT /api/faculty/me - Faculty updates their own permitted profile fields
+const updateMe = async (req, res, next) => {
+  try {
+    const faculty = await Faculty.findOne({ user: req.user._id });
+    if (!faculty) {
+      return next(new AppError('Faculty profile not found.', 404));
+    }
+
+    const {
+      name,
+      phone,
+      qualification,
+      specialization,
+      officeLocation,
+      officeHours,
+      personalEmail,
+    } = req.body;
+
+    if (qualification !== undefined) faculty.qualification = qualification;
+    if (specialization !== undefined) faculty.specialization = specialization;
+    if (officeLocation !== undefined) faculty.officeLocation = officeLocation;
+    if (officeHours !== undefined) faculty.officeHours = officeHours;
+    if (personalEmail !== undefined) faculty.personalEmail = personalEmail;
+
+    await faculty.save();
+
+    if (name || phone !== undefined) {
+      await User.findByIdAndUpdate(req.user._id, {
+        ...(name && { name }),
+        ...(phone !== undefined && { phone }),
+      });
+    }
+
+    const updated = await Faculty.findOne({ user: req.user._id })
+      .populate('user', 'name email phone profileImage role')
+      .populate('department', 'name code');
+
+    return sendSuccess(res, updated);
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getAllFaculty,
   getMe,
+  updateMe,
   getFacultyById,
   createFaculty,
   updateFaculty,

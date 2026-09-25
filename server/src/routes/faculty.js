@@ -4,8 +4,9 @@ const facultyController = require('../controllers/facultyController');
 const requireAuth = require('../middleware/requireAuth');
 const authorizeRoles = require('../middleware/authorizeRoles');
 
-// Faculty own profile endpoint
+// Faculty own profile endpoints
 router.get('/me', requireAuth, authorizeRoles('FACULTY'), facultyController.getMe);
+router.put('/me', requireAuth, authorizeRoles('FACULTY'), facultyController.updateMe);
 
 // List faculty
 router.get('/', requireAuth, facultyController.getAllFaculty);

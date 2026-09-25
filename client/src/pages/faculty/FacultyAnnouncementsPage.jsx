@@ -26,7 +26,8 @@ const FacultyAnnouncementsPage = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
-  // Form states for new announcement
+  // Form states for announcement
+  const [editingNoticeId, setEditingNoticeId] = useState(null);
   const [newTitle, setNewTitle] = useState('');
   const [newCategory, setNewCategory] = useState('Academic');
   const [newAudience, setNewAudience] = useState('All Students');
@@ -59,7 +60,8 @@ const FacultyAnnouncementsPage = () => {
           category: n.category ? (n.category.charAt(0).toUpperCase() + n.category.slice(1).toLowerCase()) : 'Academic',
           date: n.createdAt ? new Date(n.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recent',
           visibleTo: n.targetAudience ? `${n.targetAudience.charAt(0).toUpperCase() + n.targetAudience.slice(1).toLowerCase()}s` : 'All Students',
-          status: 'Published'
+          status: 'Published',
+          content: n.content || '',
         })));
       }
     } catch (err) {
@@ -67,33 +69,75 @@ const FacultyAnnouncementsPage = () => {
     }
   };
 
-  const handleCreateAnnouncement = async (e) => {
+  const handleOpenCreate = () => {
+    setEditingNoticeId(null);
+    setNewTitle('');
+    setNewCategory('Academic');
+    setNewAudience('All Students');
+    setNewContent('');
+    setModalOpen(true);
+  };
+
+  const handleOpenEdit = (item) => {
+    setEditingNoticeId(item.id);
+    setNewTitle(item.title || '');
+    setNewCategory(item.category || 'Academic');
+    setNewAudience(item.visibleTo || 'All Students');
+    setNewContent(item.content || '');
+    setModalOpen(true);
+  };
+
+  const handleSaveAnnouncement = async (e) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
 
-    try {
-      await noticeService.create({
-        title: newTitle.trim(),
-        category: newCategory.toUpperCase(),
-        targetAudience: newAudience === 'All Students' ? 'STUDENT' : 'ALL',
-        content: newContent || 'Official institutional announcement.'
-      });
-      fetchNotices();
-    } catch (err) {
-      const newItem = {
-        id: announcements.length + 1,
-        title: newTitle.trim(),
-        category: newCategory,
-        date: '21 Sep 2026',
-        visibleTo: newAudience,
-        status: 'Published',
-      };
-      setAnnouncements([newItem, ...announcements]);
+    if (editingNoticeId) {
+      try {
+        await noticeService.update(editingNoticeId, {
+          title: newTitle.trim(),
+          category: newCategory.toUpperCase(),
+          targetAudience: newAudience === 'All Students' ? 'STUDENT' : 'ALL',
+          content: newContent || 'Official institutional announcement.',
+        });
+        await fetchNotices();
+      } catch {
+        setAnnouncements(
+          announcements.map((a) =>
+            a.id === editingNoticeId
+              ? { ...a, title: newTitle.trim(), category: newCategory, visibleTo: newAudience, content: newContent }
+              : a
+          )
+        );
+      }
+      setToastMessage('✅ Announcement updated successfully!');
+    } else {
+      try {
+        await noticeService.create({
+          title: newTitle.trim(),
+          category: newCategory.toUpperCase(),
+          targetAudience: newAudience === 'All Students' ? 'STUDENT' : 'ALL',
+          content: newContent || 'Official institutional announcement.',
+        });
+        await fetchNotices();
+      } catch (err) {
+        const newItem = {
+          id: announcements.length + 1,
+          title: newTitle.trim(),
+          category: newCategory,
+          date: '21 Sep 2026',
+          visibleTo: newAudience,
+          status: 'Published',
+          content: newContent,
+        };
+        setAnnouncements([newItem, ...announcements]);
+      }
+      setToastMessage('📢 Announcement published successfully!');
     }
+
     setNewTitle('');
     setNewContent('');
+    setEditingNoticeId(null);
     setModalOpen(false);
-    setToastMessage('📢 Announcement published successfully!');
     setTimeout(() => setToastMessage(''), 3500);
   };
 
@@ -120,7 +164,7 @@ const FacultyAnnouncementsPage = () => {
         rightContent={
           <button
             type="button"
-            onClick={() => setModalOpen(true)}
+            onClick={handleOpenCreate}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -244,7 +288,8 @@ const FacultyAnnouncementsPage = () => {
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
                   <button
                     type="button"
-                    onClick={() => alert(`Editing notice: ${item.title}`)}
+                    title="Edit Announcement"
+                    onClick={() => handleOpenEdit(item)}
                     style={{
                       padding: '0.35rem 0.65rem',
                       borderRadius: '6px',
@@ -258,20 +303,6 @@ const FacultyAnnouncementsPage = () => {
                   >
                     <Edit3 size={13} />
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => alert('Options menu for: ' + item.title)}
-                    style={{
-                      padding: '0.35rem 0.45rem',
-                      borderRadius: '6px',
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #e2e8f0',
-                      color: '#64748b',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <MoreVertical size={13} />
-                  </button>
                 </div>
               </td>
             </tr>
@@ -279,7 +310,7 @@ const FacultyAnnouncementsPage = () => {
         })}
       </FacultyTable>
 
-      {/* New Announcement Modal */}
+      {/* Announcement Modal */}
       {modalOpen && (
         <div
           style={{
@@ -293,7 +324,10 @@ const FacultyAnnouncementsPage = () => {
             zIndex: 100,
             padding: '1.5rem',
           }}
-          onClick={() => setModalOpen(false)}
+          onClick={() => {
+            setModalOpen(false);
+            setEditingNoticeId(null);
+          }}
         >
           <div
             style={{
@@ -308,18 +342,21 @@ const FacultyAnnouncementsPage = () => {
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                Publish New Announcement
+                {editingNoticeId ? 'Edit Announcement' : 'Publish New Announcement'}
               </h3>
               <button
                 type="button"
-                onClick={() => setModalOpen(false)}
+                onClick={() => {
+                  setModalOpen(false);
+                  setEditingNoticeId(null);
+                }}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}
               >
                 <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleCreateAnnouncement} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <form onSubmit={handleSaveAnnouncement} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
                   Title
@@ -444,7 +481,7 @@ const FacultyAnnouncementsPage = () => {
                   }}
                 >
                   <Send size={15} />
-                  <span>Publish Notice</span>
+                  <span>{editingNoticeId ? 'Save Changes' : 'Publish Notice'}</span>
                 </button>
               </div>
             </form>

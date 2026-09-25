@@ -4,8 +4,9 @@ const studentController = require('../controllers/studentController');
 const requireAuth = require('../middleware/requireAuth');
 const authorizeRoles = require('../middleware/authorizeRoles');
 
-// Student own-profile endpoint
+// Student own-profile endpoints
 router.get('/me', requireAuth, authorizeRoles('STUDENT'), studentController.getMe);
+router.put('/me', requireAuth, authorizeRoles('STUDENT'), studentController.updateMe);
 
 // List all students - Admin and Faculty allowed
 router.get('/', requireAuth, authorizeRoles('ADMIN', 'FACULTY'), studentController.getAllStudents);

@@ -21,6 +21,8 @@ const AdminAcademicsPage = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
+  const [editingProgramId, setEditingProgramId] = useState(null);
+
   const [formData, setFormData] = useState({
     name: '',
     department: 'Computer Science',
@@ -42,23 +44,60 @@ const AdminAcademicsPage = () => {
     return true;
   });
 
-  const handleAddProgram = (e) => {
+  const handleOpenCreate = () => {
+    setEditingProgramId(null);
+    setFormData({ name: '', department: 'Computer Science', duration: '4 Years', students: 120, status: 'Active' });
+    setModalOpen(true);
+  };
+
+  const handleOpenEdit = (p) => {
+    setEditingProgramId(p.id);
+    setFormData({
+      name: p.name || '',
+      department: p.department || 'Computer Science',
+      duration: p.duration || '4 Years',
+      students: p.students || 120,
+      status: p.status || 'Active',
+    });
+    setModalOpen(true);
+  };
+
+  const handleSaveProgram = (e) => {
     e.preventDefault();
     if (!formData.name) return;
 
-    const newProg = {
-      id: programs.length + 1,
-      name: formData.name,
-      department: formData.department,
-      duration: formData.duration,
-      students: parseInt(formData.students) || 60,
-      status: formData.status,
-    };
+    if (editingProgramId) {
+      setPrograms(
+        programs.map((p) =>
+          p.id === editingProgramId
+            ? {
+                ...p,
+                name: formData.name,
+                department: formData.department,
+                duration: formData.duration,
+                students: parseInt(formData.students, 10) || 60,
+                status: formData.status,
+              }
+            : p
+        )
+      );
+      setToastMessage('✅ Academic program updated successfully!');
+    } else {
+      const newProg = {
+        id: programs.length + 1,
+        name: formData.name,
+        department: formData.department,
+        duration: formData.duration,
+        students: parseInt(formData.students, 10) || 60,
+        status: formData.status,
+      };
+      setPrograms([...programs, newProg]);
+      setToastMessage('✅ Academic program added successfully!');
+    }
 
-    setPrograms([...programs, newProg]);
     setFormData({ name: '', department: 'Computer Science', duration: '4 Years', students: 120, status: 'Active' });
+    setEditingProgramId(null);
     setModalOpen(false);
-    setToastMessage('✅ Academic program added successfully!');
     setTimeout(() => setToastMessage(''), 3500);
   };
 
@@ -71,7 +110,7 @@ const AdminAcademicsPage = () => {
         rightContent={
           <button
             type="button"
-            onClick={() => setModalOpen(true)}
+            onClick={handleOpenCreate}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -181,7 +220,8 @@ const AdminAcademicsPage = () => {
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
                 <button
                   type="button"
-                  onClick={() => alert(`Edit program: ${p.name}`)}
+                  title="Edit Program"
+                  onClick={() => handleOpenEdit(p)}
                   style={{
                     padding: '0.35rem 0.65rem',
                     borderRadius: '6px',
@@ -195,33 +235,22 @@ const AdminAcademicsPage = () => {
                 >
                   <Edit3 size={13} />
                 </button>
-                <button
-                  type="button"
-                  onClick={() => alert(`Options for: ${p.name}`)}
-                  style={{
-                    padding: '0.35rem 0.45rem',
-                    borderRadius: '6px',
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #e2e8f0',
-                    color: '#64748b',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <MoreVertical size={13} />
-                </button>
               </div>
             </td>
           </tr>
         ))}
       </AdminTable>
 
-      {/* Add Program Modal */}
+      {/* Add / Edit Program Modal */}
       <AdminModal
         isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title="Add Academic Program"
+        onClose={() => {
+          setModalOpen(false);
+          setEditingProgramId(null);
+        }}
+        title={editingProgramId ? 'Edit Academic Program' : 'Add Academic Program'}
       >
-        <form onSubmit={handleAddProgram} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <form onSubmit={handleSaveProgram} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div>
             <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
               Program Name &amp; Degree
@@ -341,7 +370,7 @@ const AdminAcademicsPage = () => {
                 cursor: 'pointer',
               }}
             >
-              Create Program
+              {editingProgramId ? 'Save Changes' : 'Create Program'}
             </button>
           </div>
         </form>

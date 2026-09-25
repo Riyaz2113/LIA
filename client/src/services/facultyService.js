@@ -13,6 +13,10 @@ export const facultyService = {
     const res = await apiClient.get('/faculty/me');
     return res.data;
   },
+  updateMe: async (data) => {
+    const res = await apiClient.put('/faculty/me', data);
+    return res.data;
+  },
   create: async (data) => {
     const res = await apiClient.post('/faculty', data);
     return res.data;

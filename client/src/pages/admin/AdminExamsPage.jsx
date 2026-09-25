@@ -74,6 +74,8 @@ const AdminExamsPage = () => {
     loadExamsAndResults();
   }, []);
 
+  const [editingExamId, setEditingExamId] = useState(null);
+
   const [formData, setFormData] = useState({
     exam: 'Mid-Term Exam I',
     subject: '',
@@ -102,29 +104,63 @@ const AdminExamsPage = () => {
     return true;
   });
 
-  const handleAddExam = async (e) => {
-    e.preventDefault();
-    if (!formData.subject || !formData.date) return;
+  const handleEditExam = (exam) => {
+    setEditingExamId(exam.id);
+    setFormData({
+      exam: exam.exam || 'Mid-Term Exam I',
+      subject: exam.subject || '',
+      date: exam.date || '',
+      time: exam.time || '10:00 AM - 12:00 PM',
+      room: exam.room || 'Hall A',
+      department: exam.department || 'CSE',
+      semester: exam.semester || 'III Year',
+      status: exam.status || 'Scheduled',
+    });
+    setModalOpen(true);
+  };
 
-    try {
-      await examService.create({
-        name: formData.exam,
-        subject: formData.subject,
-        date: formData.date,
-        startTime: formData.time.split('-')[0]?.trim() || '10:00',
-        endTime: formData.time.split('-')[1]?.trim() || '12:00',
-        room: formData.room,
-      });
-      await loadExamsAndResults();
-    } catch {
-      const newExam = {
-        id: Date.now(),
-        ...formData,
-      };
-      setExams([newExam, ...exams]);
+  const handleSaveExam = async (e) => {
+    e.preventDefault();
+    if (!formData.subject) return;
+
+    if (editingExamId) {
+      try {
+        await examService.update(editingExamId, {
+          name: formData.exam,
+          subject: formData.subject,
+          date: formData.date,
+          startTime: formData.time.split('-')[0]?.trim() || '10:00',
+          endTime: formData.time.split('-')[1]?.trim() || '12:00',
+          room: formData.room,
+        });
+        await loadExamsAndResults();
+      } catch {
+        setExams(exams.map((x) => (x.id === editingExamId ? { ...x, ...formData } : x)));
+      }
+      setToastMessage('✅ Examination details updated successfully!');
+    } else {
+      try {
+        await examService.create({
+          name: formData.exam,
+          subject: formData.subject,
+          date: formData.date,
+          startTime: formData.time.split('-')[0]?.trim() || '10:00',
+          endTime: formData.time.split('-')[1]?.trim() || '12:00',
+          room: formData.room,
+        });
+        await loadExamsAndResults();
+      } catch {
+        const newExam = {
+          id: Date.now(),
+          ...formData,
+        };
+        setExams([newExam, ...exams]);
+      }
+      setToastMessage(`✅ Exam scheduled for ${formData.subject}`);
     }
 
     setModalOpen(false);
+    setEditingExamId(null);
     setFormData({
       exam: 'Mid-Term Exam I',
       subject: '',
@@ -135,13 +171,16 @@ const AdminExamsPage = () => {
       semester: 'III Year',
       status: 'Scheduled',
     });
-
-    setToastMessage(`Exam scheduled for ${newExam.subject}`);
     setTimeout(() => setToastMessage(''), 3500);
   };
 
-  const handleDeleteExam = (id) => {
-    setExams(exams.filter((x) => x.id !== id));
+  const handleDeleteExam = async (id) => {
+    try {
+      await examService.delete(id);
+      await loadExamsAndResults();
+    } catch {
+      setExams(exams.filter((x) => x.id !== id));
+    }
     setToastMessage('Exam removed from schedule');
     setTimeout(() => setToastMessage(''), 3000);
   };
@@ -280,6 +319,21 @@ const AdminExamsPage = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <button
                     type="button"
+                    title="Edit Exam"
+                    style={{
+                      padding: '4px',
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      color: '#2563eb',
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => handleEditExam(exam)}
+                  >
+                    <Edit3 size={14} color="#2563eb" />
+                  </button>
+                  <button
+                    type="button"
+                    title="Delete Exam"
                     style={{
                       padding: '4px',
                       backgroundColor: 'transparent',
@@ -355,13 +409,16 @@ const AdminExamsPage = () => {
         />
       )}
 
-      {/* Add Exam Modal */}
+      {/* Add / Edit Exam Modal */}
       <AdminModal
         isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title="Schedule New Examination"
+        onClose={() => {
+          setModalOpen(false);
+          setEditingExamId(null);
+        }}
+        title={editingExamId ? 'Edit Examination Schedule' : 'Schedule New Examination'}
       >
-        <form onSubmit={handleAddExam} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <form onSubmit={handleSaveExam} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div>
             <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 500, color: '#334155', marginBottom: '4px' }}>
               Examination Title *
@@ -550,7 +607,7 @@ const AdminExamsPage = () => {
                 cursor: 'pointer',
               }}
             >
-              Schedule Exam
+              {editingExamId ? 'Save Changes' : 'Schedule Exam'}
             </button>
           </div>
         </form>

@@ -83,6 +83,21 @@ const studentSchema = new Schema(
       state: { type: String, trim: true, default: '' },
       pincode: { type: String, trim: true, default: '' },
     },
+    personalEmail: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    alternatePhone: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    bloodGroup: {
+      type: String,
+      trim: true,
+      default: '',
+    },
     guardianName: {
       type: String,
       trim: true,
@@ -93,6 +108,14 @@ const studentSchema = new Schema(
       type: String,
       trim: true,
       default: '',
+    },
+    achievements: {
+      type: [String],
+      default: [],
+    },
+    interests: {
+      type: [String],
+      default: [],
     },
     profileImage: {
       type: String,   // Cloudinary URL — stored later
