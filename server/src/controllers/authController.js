@@ -65,16 +65,26 @@ const login = async (req, res, next) => {
 
     if (isEmail) {
       // Email login — works for STUDENT, FACULTY, ADMIN
-      user = await User.findOne({ email: identifier.toLowerCase() }).select('+password');
+      user = await User.findOne({ email: identifier.toLowerCase().trim() }).select('+password');
     } else {
-      // Roll number login — STUDENT only
-      // Find the Student record by rollNumber, then resolve the linked User
+      const normalizedIdentifier = identifier.trim().toUpperCase();
+
+      // 1. Roll number login — STUDENT lookup
       const student = await Student.findOne({
-        rollNumber: identifier.toUpperCase(),
+        rollNumber: normalizedIdentifier,
       }).populate({ path: 'user', select: '+password' });
 
-      if (student) {
+      if (student && student.user) {
         user = student.user;
+      } else {
+        // 2. Employee ID login — FACULTY lookup
+        const faculty = await Faculty.findOne({
+          employeeId: normalizedIdentifier,
+        }).populate({ path: 'user', select: '+password' });
+
+        if (faculty && faculty.user) {
+          user = faculty.user;
+        }
       }
     }
 

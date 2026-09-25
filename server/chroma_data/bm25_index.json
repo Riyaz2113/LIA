@@ -23,46 +23,7 @@
         "section": null,
         "contentHash": "reb_hash_2"
       }
-    },
-    {
-      "id": "6ab39e50fd75e6617bd32b5e_0_4d407b4cff95592ab877d172221300d37859043be9ba381d5704b3de416c4201",
-      "documentId": "6ab39e50fd75e6617bd32b5e",
-      "chunkIndex": 0,
-      "text": "Vignan's Lara Institute of Technology & Science (VLITS)\nAcademic Regulations & Attendance Policy\n\n1. Attendance Requirements:\nStudents are required to maintain a minimum of 75% aggregate attendance in all subjects and practicals to be eligible for semester-end examinations.\nCondonation of shortage of attendance up to 10% (between 65% and 74%) may be granted by the Principal on medical grounds upon payment of the prescribed condonation fee.\nStudents with less than 65% attendance will be detained and must repeat the semester.",
-      "metadata": {
-        "source": "sample_vlits_handbook.txt",
-        "title": "sample vlits handbook",
-        "pageNumber": null,
-        "section": null,
-        "contentHash": "4d407b4cff95592ab877d172221300d37859043be9ba381d5704b3de416c4201"
-      }
-    },
-    {
-      "id": "6ab39e50fd75e6617bd32b5e_1_e3de3c6ce00d10c1dfad9a8023941ad9aa5f4ad60f0448eddead32298ba7e60b",
-      "documentId": "6ab39e50fd75e6617bd32b5e",
-      "chunkIndex": 1,
-      "text": "ndonation fee.\nStudents with less than 65% attendance will be detained and must repeat the semester.\n\n2. Grading System:\nThe college follows the 10-point grading scale.\nGrade O: Outstanding (90% - 100%, Grade Points: 10)\nGrade S: Superior (80% - 89%, Grade Points: 9)\nGrade A: Excellent (70% - 79%, Grade Points: 8)\nGrade B: Good (60% - 69%, Grade Points: 7)\nGrade C: Average (50% - 59%, Grade Points: 6)\nGrade D: Pass (40% - 49%, Grade Points: 5)\nGrade F: Fail (Below 40%, Grade Points: 0)",
-      "metadata": {
-        "source": "sample_vlits_handbook.txt",
-        "title": "sample vlits handbook",
-        "pageNumber": null,
-        "section": null,
-        "contentHash": "e3de3c6ce00d10c1dfad9a8023941ad9aa5f4ad60f0448eddead32298ba7e60b"
-      }
-    },
-    {
-      "id": "6ab39e50fd75e6617bd32b5e_2_82273f5592642a66f0bb554fdfc2906482e0d4de2471c846c2891263a51fa066",
-      "documentId": "6ab39e50fd75e6617bd32b5e",
-      "chunkIndex": 2,
-      "text": "ade Points: 6)\nGrade D: Pass (40% - 49%, Grade Points: 5)\nGrade F: Fail (Below 40%, Grade Points: 0)\n\n3. Training & Placement Cell:\nThe Training and Placement Cell coordinates campus recruitment for leading tech firms including TCS, Infosys, Wipro, and Cognizant.\nStudents eligible for placement drives must have a minimum CGPA of 6.5 with no standing backlogs.\nPlacement training includes aptitude preparation, coding challenges, and mock interviews.",
-      "metadata": {
-        "source": "sample_vlits_handbook.txt",
-        "title": "sample vlits handbook",
-        "pageNumber": null,
-        "section": null,
-        "contentHash": "82273f5592642a66f0bb554fdfc2906482e0d4de2471c846c2891263a51fa066"
-      }
     }
   ],
-  "count": 5
+  "count": 2
 }

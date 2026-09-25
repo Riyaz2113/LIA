@@ -43,6 +43,7 @@ const seedDatabase = async () => {
       console.log('👑 Admin user created (admin@vlits.edu.in / Admin@123)');
     } else {
       admin.password = adminPasswordHash;
+      admin.isActive = true;
       await admin.save();
     }
 
@@ -89,6 +90,7 @@ const seedDatabase = async () => {
         });
       } else {
         user.password = facultyPasswordHash;
+        user.isActive = true;
         await user.save();
       }
 
@@ -127,6 +129,7 @@ const seedDatabase = async () => {
         });
       } else {
         user.password = studentPasswordHash;
+        user.isActive = true;
         await user.save();
       }
 
