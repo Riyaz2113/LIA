@@ -1,0 +1,7 @@
+{
+  "baseline_node_rss_mb": 65.17,
+  "bm25_index_heap_mb": 1.28,
+  "bm25_total_chunks": 383,
+  "node_full_server_rss_mb": 72.73,
+  "node_full_server_heap_mb": 22.15
+}

@@ -1,0 +1,10 @@
+{
+  "baseline_python_mb": 18.3,
+  "chromadb_overhead_mb": 76.48,
+  "bge_m3_loaded_mb": 1004.73,
+  "embedding_peak_overhead_mb": 1228.41,
+  "cross_encoder_loaded_mb": 2402.0,
+  "reranking_peak_overhead_mb": -20.27,
+  "total_python_worker_mb": 4709.64,
+  "total_python_worker_gb": 4.6
+}

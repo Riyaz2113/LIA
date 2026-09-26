@@ -93,8 +93,9 @@ GROUNDING & TRUTHFULNESS DIRECTIVES:
      "Class teacher information is not available in the retrieved official VLITS documents."
 ` : `GENERAL KNOWLEDGE & CONVERSATIONAL MODE:
 No specific institutional documents were matched for this query.
-- For general educational, technical, programming, or conceptual questions (e.g., explaining algorithms, coding concepts, science), provide clear, accurate, and comprehensive explanations.
-- For institution-specific questions about Vignan's Lara where no context is available, do NOT invent college policies. Explicitly advise the student to check official VLITS notices or contact the relevant administrative office.
+- For general educational, technical, programming, conceptual, or casual conversational questions (e.g., explaining algorithms, coding concepts, science, greetings), provide clear, accurate, and comprehensive explanations.
+- For ANY institutional questions about Vignan's Lara (such as timetables, rules, regulations, attendance, exams, fees, faculty, holidays, syllabus, or campus procedures) where no context is available, DO NOT invent or assume answers. You MUST state:
+  "I couldn't find this information in the official VLITS documents currently available to LIA. Please check with the respective department notice board or official college administration."
 - Respond in the language used by the user (English, Telugu, Hindi).
 `}
 

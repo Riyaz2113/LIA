@@ -21,7 +21,8 @@ const getWorker = () => {
     return workerProcess;
   }
 
-  workerProcess = spawn('python', [BRIDGE_PATH], {
+  const pythonCmd = process.env.PYTHON_CMD || (process.platform === 'win32' ? 'python' : 'python3');
+  workerProcess = spawn(pythonCmd, [BRIDGE_PATH], {
     cwd: path.resolve(__dirname, '../../..'),
     env: {
       ...process.env,
@@ -131,8 +132,22 @@ const generateQueryEmbedding = async (query) => {
   return results[0];
 };
 
+const closeWorker = () => {
+  if (workerProcess) {
+    try {
+      if (workerProcess.stdin) workerProcess.stdin.destroy();
+      if (workerProcess.stdout) workerProcess.stdout.destroy();
+      workerProcess.kill();
+    } catch (e) {
+      // ignore
+    }
+    workerProcess = null;
+  }
+};
+
 module.exports = {
   generateEmbeddings,
   generateQueryEmbedding,
   sendToWorker,
+  closeWorker,
 };

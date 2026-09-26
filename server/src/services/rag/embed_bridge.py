@@ -27,8 +27,18 @@ def get_optimal_device():
 DEVICE = get_optimal_device()
 MODEL_NAME = os.environ.get("RAG_EMBEDDING_MODEL", "BAAI/bge-m3")
 RERANKER_MODEL_NAME = os.environ.get("RAG_RERANKER_MODEL", "BAAI/bge-reranker-v2-m3")
+CHROMA_HOST = os.environ.get("CHROMA_HOST")
+CHROMA_PORT = os.environ.get("CHROMA_PORT")
+CHROMA_SSL = os.environ.get("CHROMA_SSL", "false").lower() in ("true", "1", "yes")
 CHROMA_PATH = os.environ.get("CHROMA_PATH", "./chroma_data")
 COLLECTION_NAME = os.environ.get("CHROMA_COLLECTION", "lia_knowledge")
+
+# Set CPU threads for predictable performance in containerized environments
+if DEVICE == "cpu":
+    try:
+        torch.set_num_threads(int(os.environ.get("TORCH_NUM_THREADS", "4")))
+    except Exception:
+        pass
 
 _model = None
 _reranker = None
@@ -66,7 +76,18 @@ def get_reranker():
 def get_chroma():
     global _chroma_client, _collection
     if _chroma_client is None:
-        _chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
+        use_remote = os.environ.get("CHROMA_USE_REMOTE", "false").lower() in ("true", "1", "yes")
+        if CHROMA_HOST and (use_remote or CHROMA_HOST not in ("127.0.0.1", "localhost")):
+            port = int(CHROMA_PORT) if CHROMA_PORT else 8000
+            sys.stderr.write(f"[embed_bridge] Connecting to remote ChromaDB at {CHROMA_HOST}:{port} (SSL: {CHROMA_SSL})\n")
+            _chroma_client = chromadb.HttpClient(
+                host=CHROMA_HOST,
+                port=port,
+                ssl=CHROMA_SSL
+            )
+        else:
+            resolved_path = os.path.abspath(CHROMA_PATH)
+            _chroma_client = chromadb.PersistentClient(path=resolved_path)
     if _collection is None:
         _collection = _chroma_client.get_or_create_collection(
             name=COLLECTION_NAME,

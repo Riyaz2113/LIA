@@ -62,7 +62,7 @@ const run = async () => {
       for (const file of files) {
         const filename = path.basename(file);
         try {
-          const extracted = await extractTextFromFile(file);
+          const extracted = await extractTextFromFile(file, { disableOcr: true });
           if (extracted.text && extracted.text.trim()) {
             const cleaned = cleanText(extracted.text);
             const chunks = splitIntoChunks(cleaned, {

@@ -70,6 +70,10 @@ const chatMessageSchema = new Schema(
           trim: true,
           default: '',
         },
+        metadata: {
+          type: Schema.Types.Mixed,
+          default: {},
+        },
       },
     ],
   },

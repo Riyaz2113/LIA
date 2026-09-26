@@ -1,0 +1,62 @@
+services:
+  - type: web
+    name: lia-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: pro
+    region: oregon
+    disk:
+      name: chroma-data
+      mountPath: /app/chroma_data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.5-flash-lite
+      - key: CLIENT_URL
+        value: https://lia-cyan.vercel.app
+      - key: PYTHON_CMD
+        value: /opt/venv/bin/python
+      - key: TORCH_NUM_THREADS
+        value: "4"
+      - key: RAG_EMBEDDING_MODEL
+        value: BAAI/bge-m3
+      - key: RAG_RERANKER_MODEL
+        value: BAAI/bge-reranker-v2-m3
+      - key: CHROMA_PATH
+        value: /app/chroma_data
+      - key: CHROMA_COLLECTION
+        value: lia_knowledge
+      - key: BM25_INDEX_PATH
+        value: /app/chroma_data/bm25_index.json
+      - key: RAG_CHUNK_SIZE
+        value: "1000"
+      - key: RAG_CHUNK_OVERLAP
+        value: "200"
+      - key: RRF_K
+        value: "60"
+      - key: RAG_VECTOR_TOP_K
+        value: "10"
+      - key: RAG_BM25_TOP_K
+        value: "10"
+      - key: RAG_HYBRID_TOP_K
+        value: "10"
+      - key: RAG_RERANK_TOP_K
+        value: "5"
+      - key: RAG_MAX_CONTEXT_CHARS
+        value: "20000"
+      - key: RAG_MIN_RERANK_SCORE
+        value: "-8.0"
+      - key: OCR_ENABLED
+        value: "true"
+      - key: OCR_MIN_CHARS_PER_PAGE
+        value: "50"

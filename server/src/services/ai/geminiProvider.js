@@ -46,7 +46,7 @@ const generateGeminiFallback = ({ messages, user }) => {
   }
 
   // General Institutional Assistant Response
-  return `Thank you for reaching out to **LIA (Lara Intelligent Assistant)**, the official virtual assistant for **Vignan's Lara Institute of Technology & Science**.\n\nI am here to assist you with:\n• Academic calendars, subjects & course materials\n• Exam notifications, timetables & result guidance\n• Training, campus placements & recruitment drives\n• Campus facilities, library catalog, and student life\n\nHow can I help you with your query today?`;
+  return `I couldn't find this information in the official VLITS documents currently available to LIA. Please check with the respective department notice board or official college administration.`;
 };
 
 /**
@@ -82,7 +82,7 @@ const generateGeminiResponse = async ({ messages = [], systemPrompt = LIA_SYSTEM
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    const timeout = setTimeout(() => controller.abort(), 60000); // 60 second timeout
 
     const payload = {
       systemInstruction: {
@@ -90,7 +90,7 @@ const generateGeminiResponse = async ({ messages = [], systemPrompt = LIA_SYSTEM
       },
       contents,
       generationConfig: {
-        temperature: 0.7,
+        temperature: 0.2,
         topP: 0.95,
         maxOutputTokens: 1024,
       },

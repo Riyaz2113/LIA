@@ -7,13 +7,29 @@
 const fs = require('fs');
 const path = require('path');
 
+const getResolvedStoragePath = (providedPath) => {
+  if (providedPath && fs.existsSync(providedPath)) return providedPath;
+  if (process.env.BM25_INDEX_PATH) {
+    const customPath = path.resolve(process.env.BM25_INDEX_PATH);
+    if (fs.existsSync(customPath)) return customPath;
+  }
+  const defaultPath = path.resolve(__dirname, '../../../chroma_data/bm25_index.json');
+  if (fs.existsSync(defaultPath)) return defaultPath;
+  const cwdPath = path.resolve(process.cwd(), 'chroma_data/bm25_index.json');
+  if (fs.existsSync(cwdPath)) return cwdPath;
+  const serverPath = path.resolve(process.cwd(), 'server/chroma_data/bm25_index.json');
+  if (fs.existsSync(serverPath)) return serverPath;
+  return process.env.BM25_INDEX_PATH ? path.resolve(process.env.BM25_INDEX_PATH) : defaultPath;
+};
+
 const DEFAULT_STORAGE_PATH = path.resolve(__dirname, '../../../chroma_data/bm25_index.json');
 const K1 = 1.5;
 const B = 0.75;
 
 class BM25Service {
-  constructor(storagePath = DEFAULT_STORAGE_PATH) {
-    this.storagePath = storagePath;
+  constructor(storagePath = null) {
+    this.customStoragePath = storagePath;
+    this.storagePath = storagePath || getResolvedStoragePath();
     this.chunks = new Map(); // id -> { id, documentId, chunkIndex, text, metadata, tokens }
     this.docFreq = new Map(); // term -> number of documents containing term
     this.docLengths = new Map(); // id -> number of tokens
@@ -49,6 +65,7 @@ class BM25Service {
    */
   async init() {
     if (this.isInitialized) return;
+    this.storagePath = this.customStoragePath || getResolvedStoragePath();
 
     try {
       if (fs.existsSync(this.storagePath)) {

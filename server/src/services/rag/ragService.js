@@ -100,6 +100,15 @@ const generateGroundedResponse = async ({
     };
   });
 
+  // RAG Pipeline Telemetry & Grounding Verification Log (Development & Production Safe)
+  const sourceNames = sources.map(s => `${s.metadata?.title || s.metadata?.source || 'Document'}${s.metadata?.pageNumber ? ` (p.${s.metadata.pageNumber})` : ''}`).join(', ');
+  console.log(`[RAG DEBUG]
+Query: ${cleanQuery}
+Retrieved chunks: ${verifiedCandidates.length}
+Final context length: ${contextString.length} chars
+Sources: ${sourceNames || 'None'}
+Gemini request contains grounded context: ${Boolean(contextString && contextString.trim().length > 0)}`);
+
   return {
     text: aiResponse.text,
     sources,
