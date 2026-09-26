@@ -11,16 +11,26 @@ import torch
 from sentence_transformers import SentenceTransformer, CrossEncoder
 import chromadb
 
-# Robust CUDA Device Detection
+# Robust Device Detection with VRAM Headroom Check
 def get_optimal_device():
+    forced = os.environ.get("TORCH_DEVICE")
+    if forced in ("cuda", "cpu"):
+        return forced
+
     if torch.cuda.is_available():
         try:
-            # Test allocating a tiny tensor to verify CUDA execution context
-            t = torch.zeros(1, device="cuda")
-            del t
-            return "cuda"
+            free_bytes, total_bytes = torch.cuda.mem_get_info(0)
+            free_mb = free_bytes / (1024 * 1024)
+            # Require at least 2500 MB free VRAM to safely host models without OOM
+            if free_mb >= 2500:
+                t = torch.zeros(1, device="cuda")
+                del t
+                return "cuda"
+            else:
+                sys.stderr.write(f"[embed_bridge] Free VRAM ({free_mb:.1f} MB < 2500 MB). Using CPU mode.\n")
+                return "cpu"
         except Exception as e:
-            sys.stderr.write(f"[embed_bridge] CUDA available but init failed: {e}. Falling back to CPU.\n")
+            sys.stderr.write(f"[embed_bridge] CUDA check failed ({e}). Falling back to CPU.\n")
             return "cpu"
     return "cpu"
 
@@ -48,12 +58,11 @@ _collection = None
 def get_model():
     global _model
     if _model is None:
-        target_dev = get_optimal_device()
         try:
-            _model = SentenceTransformer(MODEL_NAME, device=target_dev)
+            _model = SentenceTransformer(MODEL_NAME, device=DEVICE)
         except Exception as e:
-            if target_dev != "cpu":
-                sys.stderr.write(f"[embed_bridge] Failed loading {MODEL_NAME} on {target_dev}: {e}. Retrying on CPU.\n")
+            if DEVICE != "cpu":
+                sys.stderr.write(f"[embed_bridge] Failed loading {MODEL_NAME} on {DEVICE}: {e}. Retrying on CPU.\n")
                 _model = SentenceTransformer(MODEL_NAME, device="cpu")
             else:
                 raise e
@@ -62,12 +71,11 @@ def get_model():
 def get_reranker():
     global _reranker
     if _reranker is None:
-        target_dev = get_optimal_device()
         try:
-            _reranker = CrossEncoder(RERANKER_MODEL_NAME, device=target_dev)
+            _reranker = CrossEncoder(RERANKER_MODEL_NAME, device=DEVICE)
         except Exception as e:
-            if target_dev != "cpu":
-                sys.stderr.write(f"[embed_bridge] Failed loading {RERANKER_MODEL_NAME} on {target_dev}: {e}. Retrying on CPU.\n")
+            if DEVICE != "cpu":
+                sys.stderr.write(f"[embed_bridge] Failed loading {RERANKER_MODEL_NAME} on {DEVICE}: {e}. Retrying on CPU.\n")
                 _reranker = CrossEncoder(RERANKER_MODEL_NAME, device="cpu")
             else:
                 raise e
@@ -189,8 +197,8 @@ def handle_health():
     cuda_detected = torch.cuda.is_available()
     gpu_name = torch.cuda.get_device_name(0) if cuda_detected else "N/A"
     
-    bge_dev = str(getattr(_model, "device", DEVICE if _model is not None else get_optimal_device()))
-    reranker_dev = str(getattr(_reranker, "device", DEVICE if _reranker is not None else get_optimal_device()))
+    bge_dev = str(getattr(_model, "device", DEVICE))
+    reranker_dev = str(getattr(_reranker, "device", DEVICE))
     
     vram_alloc = 0.0
     vram_total = 0.0
@@ -203,7 +211,7 @@ def handle_health():
 
     return {
         "status": "HEALTHY",
-        "device": get_optimal_device(),
+        "device": DEVICE,
         "cudaDetected": cuda_detected,
         "gpuName": gpu_name,
         "bgeM3Device": bge_dev,

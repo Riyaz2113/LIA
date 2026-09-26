@@ -2,7 +2,7 @@
  * retrievalService.js
  * Advanced Multi-Stage Retrieval Pipeline for LIA RAG:
  * 1. retrieveKnowledge: Dense-only vector retrieval (BGE-M3 + ChromaDB)
- * 2. retrieveHybrid: Hybrid retrieval (BGE-M3 + BM25 + RRF)
+ * 2. retrieveHybrid: Hybrid retrieval (BGE-M3 + BM25 + RRF) with Institutional Query Expansion
  * 3. retrieveReranked: Full Multi-Stage Retrieval (Hybrid Pool -> BAAI/bge-reranker-v2-m3 Cross-Encoder)
  */
 
@@ -11,6 +11,54 @@ const chromaService = require('./chromaService');
 const bm25Service = require('./bm25Service');
 const { reciprocalRankFusion } = require('./rrf');
 const { rerankCandidates } = require('./rerankerService');
+
+/**
+ * expandInstitutionalQuery
+ * Expands abbreviations and common educational query variations for high-recall sparse & dense retrieval.
+ * Does NOT replace the user's original query for LLM generation or Cross-Encoder scoring.
+ *
+ * @param {string} query
+ * @returns {string} Expanded search query string
+ */
+const expandInstitutionalQuery = (query = '') => {
+  if (!query || typeof query !== 'string') return '';
+  let expanded = query.trim();
+
+  // Branch & Department abbreviations
+  if (/\baiml\b/i.test(expanded) || /\bai\s*ml\b/i.test(expanded) || /\bai&ml\b/i.test(expanded)) {
+    expanded += ' Artificial Intelligence & Machine Learning AIML';
+  }
+  if (/\bcsd\b/i.test(expanded)) {
+    expanded += ' Computer Science and Data Science CSD';
+  }
+  if (/\bcsm\b/i.test(expanded)) {
+    expanded += ' Computer Science and Machine Learning CSM';
+  }
+  if (/\bcai\b/i.test(expanded)) {
+    expanded += ' Computer Science and Artificial Intelligence CAI';
+  }
+
+  // Academic Year / Semester variations
+  if (/\b(4th\s*year|4\s*year|fourth\s*year|4th\s*yr|iv\s*year|iv-i|iv\s*1)\b/i.test(expanded)) {
+    expanded += ' IV B.Tech IV-I IV Year 4th Year';
+  }
+  if (/\b(3rd\s*year|3\s*year|third\s*year|3rd\s*yr|iii\s*year|iii-i|iii\s*1)\b/i.test(expanded)) {
+    expanded += ' III B.Tech III-I III Year 3rd Year';
+  }
+  if (/\b(2nd\s*year|2\s*year|second\s*year|2nd\s*yr|ii\s*year|ii-i|ii\s*1)\b/i.test(expanded)) {
+    expanded += ' II B.Tech II-I II Year 2nd Year';
+  }
+  if (/\b(1st\s*year|1\s*year|first\s*year|1st\s*yr|i\s*year|i-i|i\s*1)\b/i.test(expanded)) {
+    expanded += ' I B.Tech I-I I Year 1st Year';
+  }
+
+  // Timetable / Schedule variations
+  if (/\b(time\s*table|timetable|schedule)\b/i.test(expanded)) {
+    expanded += ' TIME TABLE timetable schedule';
+  }
+
+  return expanded;
+};
 
 /**
  * isTimetableQuery
@@ -22,6 +70,7 @@ const isTimetableQuery = (queryText = '') => {
   const timetablePatterns = [
     /\btimetable\b/i,
     /\btime\s*table\b/i,
+    /\btime_table\b/i,
     /\bclass\s*schedule\b/i,
     /\bweekly\s*schedule\b/i,
     /\btoday'?s\s*classes\b/i,
@@ -29,6 +78,10 @@ const isTimetableQuery = (queryText = '') => {
     /\blecture\s*schedule\b/i,
     /\bclass\s*timings?\b/i,
     /\bperiods?\s*schedule\b/i,
+    /\bperiod\s*timings?\b/i,
+    /\bclass\s*routine\b/i,
+    /\b(4th|3rd|2nd|1st|iv|iii|ii|i)\s*(year|b\.?tech)?\s*(timetable|time\s*table|schedule)\b/i,
+    /\b(aiml|cse|ece|it|csd|csm|cai)\s*(timetable|time\s*table|schedule)\b/i,
   ];
   return timetablePatterns.some((pattern) => pattern.test(normalized));
 };
@@ -116,15 +169,17 @@ const retrieveHybrid = async (query, options = {}) => {
   }
 
   const isTimetable = isTimetableQuery(query);
+  const expandedQuery = expandInstitutionalQuery(query);
+
   const vectorTopK = Number(options.vectorTopK || process.env.RAG_VECTOR_TOP_K || (isTimetable ? 15 : 10));
   const bm25TopK = Number(options.bm25TopK || process.env.RAG_BM25_TOP_K || (isTimetable ? 15 : 10));
   const finalTopK = Number(options.finalTopK || process.env.RAG_HYBRID_TOP_K || (isTimetable ? 15 : 10));
   const rrfK = Number(options.rrfK || process.env.RRF_K || 60);
 
-  // 1. Concurrently run Dense Vector Search & BM25 Keyword Search
+  // 1. Concurrently run Dense Vector Search & BM25 Keyword Search (using expanded query for high recall)
   const [vectorResults, bm25Results] = await Promise.all([
     retrieveKnowledge(query, { topK: vectorTopK }),
-    bm25Service.search(query, bm25TopK),
+    bm25Service.search(expandedQuery || query, bm25TopK),
   ]);
 
   // 2. Fuse candidate rankings using Reciprocal Rank Fusion
@@ -206,5 +261,5 @@ module.exports = {
   retrieveReranked,
   isTimetableQuery,
   isTimetableChunk,
+  expandInstitutionalQuery,
 };
-

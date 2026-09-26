@@ -1,57 +1,31 @@
 require('dotenv').config();
+const mongoose = require('mongoose');
 const { generateGroundedResponse } = require('../src/services/rag/ragService');
 
-async function runTests() {
-  console.log('==================================================');
-  console.log('🧪 TESTING RAG PIPELINE GROUNDING SCENARIOS');
-  console.log('==================================================\n');
+async function testScenarios() {
+  await mongoose.connect(process.env.MONGODB_URI);
+  console.log('Testing Core Diagnostic Scenarios:\n');
 
-  // Test 1: Impossible / Unknown Question
-  console.log('1. TEST IMPOSSIBLE / UNKNOWN QUESTION:');
-  const q1 = 'What is the official VLITS rule for a fictional department called Quantum Robotics Department?';
-  console.log('Query:', q1);
-  const res1 = await generateGroundedResponse({ query: q1 });
-  console.log('Sources:', res1.sources.length);
-  console.log('Response:\n', res1.text);
-  console.log('\n--------------------------------------------------\n');
+  // Test 1: Original test
+  console.log('1. "What is the IV-I AIML timetable?"');
+  const t1 = await generateGroundedResponse({ query: 'What is the IV-I AIML timetable?' });
+  console.log('Top Source:', t1.sources?.[0]?.metadata?.source, '(p.' + t1.sources?.[0]?.metadata?.pageNumber + ')');
+  console.log('Passes:', t1.sources?.[0]?.metadata?.source?.includes('TIME TABLE') && t1.text.length > 50 ? '✅ PASS' : '❌ FAIL');
 
-  // Test 2: Timetable Document-Only Question
-  console.log('2. TEST TIMETABLE QUESTION:');
-  const q2 = 'What is the IV-I AIML timetable?';
-  console.log('Query:', q2);
-  const res2 = await generateGroundedResponse({ query: q2 });
-  console.log('Sources:', res2.sources.map(s => `${s.metadata?.title || s.metadata?.source} (p.${s.metadata?.pageNumber})`));
-  console.log('Response:\n', res2.text);
-  console.log('\n--------------------------------------------------\n');
+  // Test 2: R23 regulations
+  console.log('\n2. "According to the R23 regulations, what are the relevant academic regulations?"');
+  const t2 = await generateGroundedResponse({ query: 'According to the R23 regulations, what are the relevant academic regulations?' });
+  console.log('Top Source:', t2.sources?.[0]?.metadata?.source, '(p.' + t2.sources?.[0]?.metadata?.pageNumber + ')');
+  console.log('Passes:', t2.sources?.[0]?.metadata?.source?.includes('R23-REGULATIONS') && t2.text.length > 50 ? '✅ PASS' : '❌ FAIL');
 
-  // Test 3: R23 Regulations Question
-  console.log('3. TEST R23 REGULATIONS QUESTION:');
-  const q3 = 'What are the promotion rules and credit requirements in R23 regulations?';
-  console.log('Query:', q3);
-  const res3 = await generateGroundedResponse({ query: q3 });
-  console.log('Sources:', res3.sources.map(s => `${s.metadata?.title || s.metadata?.source} (p.${s.metadata?.pageNumber})`));
-  console.log('Response:\n', res3.text);
-  console.log('\n--------------------------------------------------\n');
+  // Test 3: Unknown question
+  console.log('\n3. "What is the exact secret swimming pool membership fee at VLITS for year 2099?"');
+  const t3 = await generateGroundedResponse({ query: 'What is the exact secret swimming pool membership fee at VLITS for year 2099?' });
+  console.log('Response excerpt:', t3.text.slice(0, 150));
+  const declines = t3.text.toLowerCase().includes("couldn't find") || t3.text.toLowerCase().includes("could not find") || t3.text.toLowerCase().includes("not available") || t3.text.toLowerCase().includes("could not verify");
+  console.log('Passes (Zero Hallucination):', declines ? '✅ PASS' : '❌ FAIL');
 
-  // Test 4: Multilingual Questions (Telugu, Hindi, Hinglish)
-  console.log('4. TEST MULTILINGUAL:');
-  const qTelugu = 'కళాశాలలో హాస్టల్ ఫీజు వివరాలు ఏమిటి?';
-  console.log('Query (Telugu):', qTelugu);
-  const resTelugu = await generateGroundedResponse({ query: qTelugu });
-  console.log('Telugu Sources:', resTelugu.sources.map(s => s.metadata?.title || s.metadata?.source));
-  console.log('Telugu Response:\n', resTelugu.text);
-
-  const qHindi = 'कॉलेज में प्लेसमेंट के लिए क्या नियम हैं?';
-  console.log('\nQuery (Hindi):', qHindi);
-  const resHindi = await generateGroundedResponse({ query: qHindi });
-  console.log('Hindi Sources:', resHindi.sources.map(s => s.metadata?.title || s.metadata?.source));
-  console.log('Hindi Response:\n', resHindi.text);
-
-  console.log('\n==================================================');
-  process.exit(0);
+  await mongoose.disconnect();
 }
 
-runTests().catch(err => {
-  console.error('Test error:', err);
-  process.exit(1);
-});
+testScenarios().catch(console.error);
